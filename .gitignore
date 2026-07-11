@@ -1,0 +1,10 @@
+node_modules/
+.next/
+ml-engine/venv/
+ml-engine/__pycache__/
+ml-engine/models/__pycache__/
+*.log
+.env
+*.xlsx
+mysql_data/
+.opencode/

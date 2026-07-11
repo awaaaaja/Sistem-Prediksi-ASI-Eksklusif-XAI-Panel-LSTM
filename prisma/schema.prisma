@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Puskesmas {
+  id             Int            @id @default(autoincrement())
+  kode           String         @unique @db.VarChar(10)
+  nama           String         @db.VarChar(100)
+  alamat         String?        @db.VarChar(255)
+  kota           String?        @db.VarChar(50)
+  provinsi       String?        @db.VarChar(50)
+  aktif          Boolean        @default(true)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  dataBulanan    DataBulanan[]
+  prediksi       Prediksi[]
+
+  @@map("puskesmas")
+}
+
+model DataBulanan {
+  id                        Int      @id @default(autoincrement())
+  puskesmasId               Int      @map("puskesmas_id")
+  tanggal                   DateTime @db.Date
+  jumlahBayi6Bulan          Float    @map("jumlah_bayi_6_bulan")
+  jumlahASIEksklusif        Float    @map("jumlah_asi_eksklusif")
+  persentaseCakupan         Float?   @map("persentase_cakupan")
+  createdAt                 DateTime @default(now()) @map("created_at")
+
+  puskesmas                 Puskesmas @relation(fields: [puskesmasId], references: [id], onDelete: Cascade)
+
+  @@unique([puskesmasId, tanggal])
+  @@index([puskesmasId, tanggal])
+  @@map("data_bulanan")
+}
+
+model Prediksi {
+  id                        Int      @id @default(autoincrement())
+  puskesmasId               Int      @map("puskesmas_id")
+  tanggalPrediksi           DateTime @default(now()) @map("tanggal_prediksi")
+  nilaiPrediksi             Float    @map("nilai_prediksi")
+  executionTimeMs           Float?   @map("execution_time_ms")
+  createdAt                 DateTime @default(now()) @map("created_at")
+
+  puskesmas                 Puskesmas @relation(fields: [puskesmasId], references: [id], onDelete: Cascade)
+  shapValues                ShapValue[]
+
+  @@index([puskesmasId])
+  @@map("prediksi")
+}
+
+model ShapValue {
+  id                        Int      @id @default(autoincrement())
+  prediksiId                Int      @map("prediksi_id")
+  fitur                     String   @db.VarChar(50)
+  lag                       Int
+  shapValue                 Float    @map("shap_value")
+  createdAt                 DateTime @default(now()) @map("created_at")
+
+  prediksi                  Prediksi @relation(fields: [prediksiId], references: [id], onDelete: Cascade)
+
+  @@unique([prediksiId, fitur, lag])
+  @@index([prediksiId])
+  @@map("shap_value")
+}
+
+model UploadLog {
+  id                        Int      @id @default(autoincrement())
+  namaFile                  String   @map("nama_file") @db.VarChar(255)
+  totalBaris                Int      @map("total_baris")
+  barisValid                Int      @map("baris_valid")
+  barisError                Int      @map("baris_error")
+  errors                    String?  @db.Text
+  status                    String   @default("success") @db.VarChar(20)
+  createdAt                 DateTime @default(now()) @map("created_at")
+
+  @@map("upload_log")
+}
