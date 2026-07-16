@@ -7,6 +7,7 @@ export async function GET(
 ) {
   const data = await prisma.puskesmas.findUnique({
     where: { kode: params.kode },
+    include: { kecamatan: true },
   })
   if (!data) {
     return NextResponse.json({ error: "Not found" }, { status: 404 })

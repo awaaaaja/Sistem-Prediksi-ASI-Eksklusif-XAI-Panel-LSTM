@@ -1,7 +1,12 @@
 import numpy as np
 
 WINDOW_SIZE = 12
-N_FEATURES = 2  # Jumlah_Bayi_6_Bulan, Jumlah_ASI_Eksklusif
+N_FEATURES = 7
+FEATURE_NAMES = [
+    "Jumlah_Bayi_6_Bulan", "Jumlah_ASI_Eksklusif",
+    "Lag1_Target", "Lag2_Target", "Lag3_Target",
+    "Month_Sin", "Month_Cos"
+]
 
 
 def prepare_sliding_window(history: np.ndarray) -> np.ndarray:
@@ -18,7 +23,6 @@ def prepare_sliding_window(history: np.ndarray) -> np.ndarray:
         raise ValueError(
             f"Input memiliki {history.shape[1]} fitur, "
             f"model membutuhkan {N_FEATURES} fitur. "
-            f"Gunakan kolom: Jumlah_Bayi_6_Bulan, Jumlah_ASI_Eksklusif"
         )
 
     window = history[-WINDOW_SIZE:]

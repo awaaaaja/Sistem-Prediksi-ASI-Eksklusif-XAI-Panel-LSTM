@@ -16,7 +16,7 @@ scaler_Y = None
 def load_models():
     global model, scaler_X, scaler_Y
 
-    model_path = os.getenv("MODEL_PATH", os.path.join(_BASE_DIR, "models", "model_lstm_panel.h5"))
+    model_path = os.getenv("MODEL_PATH", os.path.join(_BASE_DIR, "models", "model_lstm_panel.keras"))
     scaler_X_path = os.getenv("SCALER_X_PATH", os.path.join(_BASE_DIR, "models", "scaler_X.pkl"))
     scaler_Y_path = os.getenv("SCALER_Y_PATH", os.path.join(_BASE_DIR, "models", "scaler_Y.pkl"))
 

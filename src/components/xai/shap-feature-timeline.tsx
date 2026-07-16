@@ -26,7 +26,7 @@ export function ShapFeatureTimeline({ features }: Props) {
     <div className="space-y-5">
       {features.map((f) => (
         <div key={f.feature}>
-          <p className="mb-2 text-xs font-medium text-dark-400">{f.feature}</p>
+          <p className="mb-2 text-xs font-medium text-theme-secondary">{f.feature}</p>
           <div className="flex items-end gap-1">
             {f.impacts.map((imp, i) => {
               const pct = (imp.shap_value / maxAbs) * 100
@@ -35,7 +35,8 @@ export function ShapFeatureTimeline({ features }: Props) {
                 <div key={imp.lag} className="flex flex-1 flex-col items-center">
                   <motion.div
                     initial={{ scaleY: 0 }}
-                    animate={{ scaleY: 1 }}
+                    whileInView={{ scaleY: 1 }}
+                    viewport={{ once: true }}
                     transition={{ delay: i * 0.04, duration: 0.3 }}
                     className="w-full rounded-t-sm"
                     style={{
@@ -48,7 +49,7 @@ export function ShapFeatureTimeline({ features }: Props) {
                       transformOrigin: isPositive ? "bottom" : "top",
                     }}
                   />
-                  <span className="mt-1 text-[10px] text-dark-500">{imp.lag}</span>
+                  <span className="mt-1 text-[10px] text-muted">{imp.lag}</span>
                 </div>
               )
             })}

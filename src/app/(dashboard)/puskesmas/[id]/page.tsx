@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   ArrowLeft, Lightning, ChartLine,
   Baby, DropHalf
@@ -21,7 +21,7 @@ interface PuskesmasDetail {
   id: number
   kode: string
   nama: string
-  kota: string | null
+  kecamatan: { nama: string } | null
   alamat: string | null
 }
 
@@ -49,6 +49,14 @@ interface ShapData {
   success: boolean
   expected_value: number
   features: ShapFeature[]
+}
+
+const tooltipStyle = {
+  background: "var(--tooltip-bg)",
+  border: "1px solid var(--tooltip-border)",
+  borderRadius: 8,
+  color: "var(--tooltip-text)",
+  fontSize: 12,
 }
 
 export default function DetailPage({ params }: { params: { id: string } }) {
@@ -112,68 +120,68 @@ export default function DetailPage({ params }: { params: { id: string } }) {
       <div className="flex items-center gap-4">
         <Link
           href="/"
-          className="rounded-lg p-2 text-dark-400 transition-colors hover:bg-white/5 hover:text-white"
+          className="rounded-lg p-2 text-theme-secondary transition-colors hover:bg-hover-theme hover:text-theme"
         >
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-theme">
             {loading ? (
-              <span className="inline-block h-8 w-48 animate-pulse rounded bg-dark-700" />
+              <span className="inline-block h-8 w-48 shimmer rounded" />
             ) : (
               puskesmas?.nama ?? "Puskesmas Tidak Ditemukan"
             )}
           </h1>
           {puskesmas && (
-            <p className="text-sm text-dark-400">
-              {puskesmas.kode} &middot; {puskesmas.kota ?? "-"}
+            <p className="text-sm text-theme-secondary">
+              {puskesmas.kode} &middot; {puskesmas.kecamatan?.nama ?? "-"}
             </p>
           )}
         </div>
       </div>
 
       <div className="flex gap-3">
-        <button
+        <motion.button
           onClick={handlePredict}
           disabled={predicting || loading}
+          whileHover={{ scale: predicting || loading ? 1 : 1.02 }}
+          whileTap={{ scale: predicting || loading ? 1 : 0.96 }}
           className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50"
         >
           <Lightning size={18} weight="fill" />
           {predicting ? "Memprediksi..." : "Prediksi Sekarang"}
-        </button>
+        </motion.button>
         {history.length > 0 && (
-          <span className="self-center text-xs text-dark-500">
+          <span className="self-center text-xs text-muted">
             {history.length} bulan data tersedia
           </span>
         )}
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-400">{error}</div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-lg bg-red-500/10 p-4 text-sm text-red-400"
+        >
+          {error}
+        </motion.div>
       )}
 
       <GlowCard>
-        <h2 className="mb-4 text-lg font-semibold text-white">Data Historis (48 Bulan)</h2>
-        <div className="flex items-center gap-6 text-xs text-dark-400">
+        <h2 className="mb-4 text-lg font-semibold text-theme">Data Historis (48 Bulan)</h2>
+        <div className="flex items-center gap-6 text-xs text-theme-secondary">
           <span className="flex items-center gap-1"><Baby size={14} className="text-emerald-400" /> Bayi 6 Bulan</span>
           <span className="flex items-center gap-1"><DropHalf size={14} className="text-cyan-400" /> ASI Eksklusif</span>
         </div>
         <div className="mt-3 h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="bulan" tick={{ fill: "#64748b", fontSize: 11 }} interval={5} />
-              <YAxis tick={{ fill: "#64748b", fontSize: 11 }} />
-              <Tooltip
-                contentStyle={{
-                  background: "#0f172a",
-                  border: "1px solid rgba(148,163,184,0.15)",
-                  borderRadius: 8,
-                  color: "#f1f5f9",
-                  fontSize: 12,
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: 12, color: "#94a3b8" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+              <XAxis dataKey="bulan" tick={{ fill: "var(--text-muted)", fontSize: 11 }} interval={5} />
+              <YAxis tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Legend wrapperStyle={{ fontSize: 12, color: "var(--text-secondary)" }} />
               <Line type="monotone" dataKey="bayi" stroke="#10b981" strokeWidth={2} dot={false} name="Bayi 6 Bulan" />
               <Line type="monotone" dataKey="asi" stroke="#06b6d4" strokeWidth={2} dot={false} name="ASI Eksklusif" />
             </LineChart>
@@ -181,59 +189,69 @@ export default function DetailPage({ params }: { params: { id: string } }) {
         </div>
       </GlowCard>
 
-      {prediction !== null && (
-        <GlowCard glow="emerald">
-          <div className="flex items-center gap-4">
-            <div className="rounded-lg bg-emerald-500/10 p-3 text-emerald-400">
-              <ChartLine size={24} />
-            </div>
-            <div>
-              <p className="text-sm text-dark-400">Prediksi Cakupan ASI Eksklusif</p>
-              <p className="text-3xl font-bold text-white">
-                <AnimatedNumber value={prediction * 100} decimals={2} suffix="%" />
-              </p>
-            </div>
-          </div>
-        </GlowCard>
-      )}
+      <AnimatePresence mode="wait">
+        {prediction !== null && (
+          <motion.div
+            key={prediction}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          >
+            <GlowCard glow="emerald">
+              <div className="flex items-center gap-4">
+                <div className="rounded-lg bg-emerald-500/10 p-3 text-emerald-400">
+                  <ChartLine size={24} />
+                </div>
+                <div>
+                  <p className="text-sm text-theme-secondary">Prediksi Cakupan ASI Eksklusif</p>
+                  <p className="text-3xl font-bold text-theme">
+                    <AnimatedNumber value={prediction} decimals={2} suffix="%" />
+                  </p>
+                </div>
+              </div>
+            </GlowCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {shapData && (
         <>
           <GlowCard>
-            <h2 className="mb-4 text-lg font-semibold text-white">SHAP Force Plot</h2>
+            <h2 className="mb-4 text-lg font-semibold text-theme">SHAP Force Plot</h2>
             <ShapForcePlot features={shapData.features} expectedValue={shapData.expected_value} />
           </GlowCard>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <GlowCard>
-              <h2 className="mb-4 text-lg font-semibold text-white">Feature Importance</h2>
+              <h2 className="mb-4 text-lg font-semibold text-theme">Feature Importance</h2>
               <ShapSummaryBar features={shapData.features} />
             </GlowCard>
 
             <GlowCard>
-              <h2 className="mb-4 text-lg font-semibold text-white">Feature Timeline (12 Lag)</h2>
+              <h2 className="mb-4 text-lg font-semibold text-theme">Feature Timeline (12 Lag)</h2>
               <ShapFeatureTimeline features={shapData.features} />
             </GlowCard>
           </div>
 
           <GlowCard>
-            <h2 className="mb-4 text-lg font-semibold text-white">Interpretation</h2>
-            <div className="space-y-3 text-sm text-dark-300">
+            <h2 className="mb-4 text-lg font-semibold text-theme">Interpretation</h2>
+            <div className="space-y-3 text-sm text-theme-secondary">
               {shapData.features.map((f) => (
                 <p key={f.feature}>
-                  <span className="font-medium text-white">{f.feature}</span> — kontribusi rata-rata{" "}
+                  <span className="font-medium text-theme">{f.feature}</span> — kontribusi rata-rata{" "}
                   <span className={f.mean_abs_impact >= 0 ? "text-emerald-400" : "text-cyan-400"}>
-                    {f.mean_abs_impact >= 0 ? "+" : ""}
-                    {(f.mean_abs_impact * 100).toFixed(2)}%
+                      {f.mean_abs_impact >= 0 ? "+" : ""}
+                    {f.mean_abs_impact.toFixed(2)}%
                   </span>{" "}
                   terhadap prediksi. Lag paling berpengaruh:{" "}
-                  <span className="text-white">
+                  <span className="text-theme">
                     t-{f.impacts.reduce((a, b) => Math.abs(a.shap_value) > Math.abs(b.shap_value) ? a : b).lag}
                   </span>.
                 </p>
               ))}
-              <p className="mt-3 text-dark-500">
-                Nilai baseline (expected value): {(shapData.expected_value * 100).toFixed(2)}%
+              <p className="mt-3 text-muted">
+                Nilai baseline (expected value): {shapData.expected_value.toFixed(2)}%
               </p>
             </div>
           </GlowCard>

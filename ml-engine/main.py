@@ -151,7 +151,7 @@ async def shap_explain(req: ShapRequest):
             f"shap_values shapes={[sv.shape for sv in shap_values]}"
         )
 
-        return shap_explainer.format_shap(shap_values, expected_value, req.puskesmas_id)
+        return shap_explainer.format_shap(shap_values, expected_value, req.puskesmas_id, scaler_y=model_loader.scaler_Y)
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

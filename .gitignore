@@ -10,3 +10,17 @@ ml-engine/models/__pycache__/
 *.pdf
 mysql_data/
 .opencode/
+
+# Docs — only keep README.md and REPORT.md
+docs/RENCANA_IMPLEMENTASI.md
+docs/UI_UX_UPGRADE_PLAN.md
+
+# Generated artifacts
+_db_stats.js
+seed_error.txt
+seed_output.txt
+
+# Duplicate model files at root (already in ml-engine/models/)
+model_lstm_panel.h5
+scaler_X.pkl
+scaler_Y.pkl

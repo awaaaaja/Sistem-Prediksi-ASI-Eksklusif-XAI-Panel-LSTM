@@ -28,15 +28,16 @@ export function ShapSummaryBar({ features }: Props) {
         return (
           <div key={f.feature}>
             <div className="mb-1.5 flex items-center justify-between text-sm">
-              <span className="text-dark-300">{f.feature}</span>
-              <span className="font-mono text-xs text-dark-400">
-                {(f.mean_abs_impact * 100).toFixed(2)}%
+              <span className="text-theme-secondary">{f.feature}</span>
+              <span className="font-mono text-xs text-muted">
+                {f.mean_abs_impact.toFixed(2)}%
               </span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-dark-800">
+            <div className="h-2.5 overflow-hidden rounded-full" style={{ backgroundColor: "var(--skeleton-base)" }}>
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
+                whileInView={{ width: `${pct}%` }}
+                viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.6, ease: "easeOut" }}
                 className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500"
               />

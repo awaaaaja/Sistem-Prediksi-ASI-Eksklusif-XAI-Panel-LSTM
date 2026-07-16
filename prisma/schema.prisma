@@ -7,19 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Kecamatan {
+  id          Int         @id @default(autoincrement())
+  nama        String      @unique @db.VarChar(100)
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  puskesmas   Puskesmas[]
+
+  @@map("kecamatan")
+}
+
 model Puskesmas {
   id             Int            @id @default(autoincrement())
   kode           String         @unique @db.VarChar(10)
   nama           String         @db.VarChar(100)
   alamat         String?        @db.VarChar(255)
-  kota           String?        @db.VarChar(50)
-  provinsi       String?        @db.VarChar(50)
+  kecamatanId    Int?           @map("kecamatan_id")
+  latitude       Float?
+  longitude      Float?
+  provinsi       String?        @default("Sumatera Barat")
   aktif          Boolean        @default(true)
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
+  kecamatan      Kecamatan?     @relation(fields: [kecamatanId], references: [id])
   dataBulanan    DataBulanan[]
   prediksi       Prediksi[]
+  indikatorSegmen IndikatorSegmen[]
 
   @@map("puskesmas")
 }
@@ -81,4 +98,21 @@ model UploadLog {
   createdAt                 DateTime @default(now()) @map("created_at")
 
   @@map("upload_log")
+}
+
+model IndikatorSegmen {
+  id              Int      @id @default(autoincrement())
+  puskesmasId     Int      @map("puskesmas_id")
+  bulan           DateTime @db.Date
+  nilai_aktual    Float?
+  nilai_prediksi  Float?
+  segmen_aktual   String?  @db.VarChar(20)
+  segmen_prediksi String?  @db.VarChar(20)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  puskesmas       Puskesmas @relation(fields: [puskesmasId], references: [id], onDelete: Cascade)
+
+  @@unique([puskesmasId, bulan])
+  @@index([puskesmasId, bulan])
+  @@map("indikator_segmen")
 }

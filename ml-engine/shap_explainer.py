@@ -8,9 +8,13 @@ logger = logging.getLogger(__name__)
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-FEATURE_NAMES = ["Jumlah_Bayi_6_Bulan", "Jumlah_ASI_Eksklusif"]
+FEATURE_NAMES = [
+    "Jumlah_Bayi_6_Bulan", "Jumlah_ASI_Eksklusif",
+    "Lag1_Target", "Lag2_Target", "Lag3_Target",
+    "Month_Sin", "Month_Cos"
+]
 WINDOW_SIZE = 12
-N_FEATURES = 2
+N_FEATURES = 7
 
 explainer = None
 background_data = None
@@ -22,19 +26,18 @@ def init_shap(model, bg_path=None):
 
     try:
         background_data = np.load(bg_path)
-        logger.info(f"Background data loaded from {bg_path}, shape: {background_data.shape}")
+        logger.info(f"Background loaded from {bg_path}, shape: {background_data.shape}")
     except FileNotFoundError:
         background_data = np.random.randn(100, WINDOW_SIZE, N_FEATURES).astype(np.float32)
-        logger.warning(f"Background file not found, using random data shape {background_data.shape}")
+        logger.warning(f"Using random background, shape {background_data.shape}")
 
     explainer = shap.GradientExplainer(model, background_data)
-    logger.info("SHAP GradientExplainer initialized successfully")
+    logger.info("SHAP GradientExplainer initialized")
 
 
 def compute_shap(input_tensor: np.ndarray, model=None) -> tuple:
-    global explainer, background_data
     if explainer is None:
-        raise RuntimeError("SHAP Explainer belum diinisialisasi. Panggil init_shap() terlebih dahulu.")
+        raise RuntimeError("SHAP Explainer belum diinisialisasi.")
 
     shap_values = explainer.shap_values(input_tensor)
 
@@ -49,33 +52,42 @@ def compute_shap(input_tensor: np.ndarray, model=None) -> tuple:
             preds = model.predict(background_data[:50], verbose=0)
             ev = float(np.mean(preds))
         except Exception as e:
-            logger.warning(f"Expected value computation failed: {e}")
+            logger.warning(f"Expected value failed: {e}")
 
     return shap_arr, ev
 
 
-def format_shap(shap_arr, expected_value, puskesmas_id: int) -> dict:
+def format_shap(shap_arr, expected_value, puskesmas_id: int, scaler_y=None) -> dict:
+    # Inverse-transform SHAP values and expected_value from scaled to percentage space
+    if scaler_y is not None:
+        scale = float(scaler_y.data_max_[0] - scaler_y.data_min_[0])
+        offset = float(scaler_y.data_min_[0])
+        expected_value = expected_value * scale + offset
+    else:
+        scale = 1.0
+        offset = 0.0
+
     features = []
 
-    for feat_idx, feature_name in enumerate(FEATURE_NAMES):
+    for feat_idx in range(N_FEATURES):
         impacts = []
         for lag in range(WINDOW_SIZE):
             if shap_arr.ndim == 4:
                 val = float(shap_arr[0, lag, feat_idx, 0])
             elif shap_arr.ndim == 3:
-                val = float(shap_arr[lag, feat_idx, 0])
+                val = float(shap_arr[lag, feat_idx])
             else:
                 val = float(shap_arr[lag, feat_idx])
+            shap_pct = val * scale
             impacts.append({
                 "lag": WINDOW_SIZE - lag,
-                "shap_value": round(val, 6),
-                "feature_name": feature_name,
+                "shap_value": round(shap_pct, 6),
+                "feature_name": FEATURE_NAMES[feat_idx],
             })
 
         mean_abs = sum(abs(i["shap_value"]) for i in impacts) / len(impacts)
-
         features.append({
-            "feature": feature_name,
+            "feature": FEATURE_NAMES[feat_idx],
             "mean_abs_impact": round(mean_abs, 6),
             "impacts": impacts,
         })

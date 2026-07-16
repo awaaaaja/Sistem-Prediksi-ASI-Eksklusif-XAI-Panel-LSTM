@@ -1,0 +1,6 @@
+{
+  "train_r2": -0.0121,
+  "mean_val_r2_per_pkm": -0.161,
+  "mae": 7.26,
+  "note": "Model predicts near-mean. Segment accuracy target > 80%."
+}

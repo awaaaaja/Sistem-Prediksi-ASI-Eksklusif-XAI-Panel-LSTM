@@ -1,6 +1,14 @@
 # Sistem Prediksi ASI Eksklusif + XAI Panel LSTM
 
-Prediksi cakupan ASI Eksklusif 24 Puskesmas dengan LSTM Panel + XAI SHAP.
+**Kota Padang, Sumatera Barat** — 11 Kecamatan, 24 Puskesmas
+
+Prediksi cakupan ASI Eksklusif dengan LSTM Panel + XAI SHAP.
+
+## Data
+
+- 11 Kecamatan real: Koto Tangah, Padang Utara, Kuranji, dll
+- 24 Puskesmas real: AIR DINGIN, ANAK AIR, IKUR KOTO, dll
+- 48 bulan historis (2021-2024) dari `data_master_2021_2024.csv`
 
 ## Struktur
 
@@ -12,7 +20,7 @@ Prediksi cakupan ASI Eksklusif 24 Puskesmas dengan LSTM Panel + XAI SHAP.
 
 ```bash
 # Database
-npx prisma generate && npx prisma db push && npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts
+npx prisma generate && npx prisma db push --accept-data-loss && npx tsx prisma/seed.ts
 
 # ML Engine (port 8000)
 cd ml-engine && .\venv\Scripts\python main.py
@@ -21,4 +29,4 @@ cd ml-engine && .\venv\Scripts\python main.py
 npm run dev
 ```
 
-Lihat `docs/REPORT.md` untuk dokumentasi lengkap.
+Lihat `docs/RENCANA_IMPLEMENTASI.md` untuk rencana pengembangan selanjutnya.

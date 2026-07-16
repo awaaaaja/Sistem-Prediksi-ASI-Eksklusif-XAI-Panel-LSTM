@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { ML_ENGINE_URL, WINDOW_SIZE } from "@/lib/constants"
+import { buildFeatureArray, PREDICT_FEATURES_SELECT } from "@/lib/features"
 import type { PrediksiDTO, ShapResponse } from "@/types"
 
 export async function predictPuskesmas(
@@ -9,8 +10,8 @@ export async function predictPuskesmas(
 ): Promise<PrediksiDTO> {
   const history = await prisma.dataBulanan.findMany({
     where: { puskesmasId },
+    select: PREDICT_FEATURES_SELECT,
     orderBy: { tanggal: "asc" },
-    select: { jumlahBayi6Bulan: true, jumlahASIEksklusif: true },
   })
 
   if (history.length < WINDOW_SIZE) {
@@ -19,10 +20,7 @@ export async function predictPuskesmas(
     )
   }
 
-  const historyArr = history.map((h) => [
-    h.jumlahBayi6Bulan,
-    h.jumlahASIEksklusif,
-  ])
+  const historyArr = buildFeatureArray(history)
 
   const res = await fetch(`${ML_ENGINE_URL}/ml/predict`, {
     method: "POST",
@@ -61,18 +59,15 @@ export async function getShapValues(
 ): Promise<ShapResponse> {
   const history = await prisma.dataBulanan.findMany({
     where: { puskesmasId },
+    select: PREDICT_FEATURES_SELECT,
     orderBy: { tanggal: "asc" },
-    select: { jumlahBayi6Bulan: true, jumlahASIEksklusif: true },
   })
 
   if (history.length < WINDOW_SIZE) {
     throw new Error("Data historis tidak mencukupi untuk kalkulasi SHAP")
   }
 
-  const historyArr = history.map((h) => [
-    h.jumlahBayi6Bulan,
-    h.jumlahASIEksklusif,
-  ])
+  const historyArr = buildFeatureArray(history)
 
   const res = await fetch(`${ML_ENGINE_URL}/ml/shap`, {
     method: "POST",

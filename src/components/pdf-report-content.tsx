@@ -140,7 +140,7 @@ export function PdfReportContent({ data, reportRef }: { data: ReportData; report
           }}>
             <p style={{ fontSize: 10, margin: 0, opacity: 0.8 }}>Prediksi Cakupan ASI Eksklusif</p>
             <p style={{ fontSize: 26, fontWeight: 700, margin: "4px 0 0" }}>
-              {(data.prediction * 100).toFixed(2)}%
+              {data.prediction.toFixed(2)}%
             </p>
           </div>
         </div>
@@ -321,7 +321,7 @@ export function PdfReportContent({ data, reportRef }: { data: ReportData; report
           <div style={{ marginTop: 12, padding: "8px 12px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 4 }}>
             <p style={{ fontSize: 9, color: "#94a3b8", margin: 0, fontStyle: "italic" }}>
               Dokumen ini dicetak secara otomatis dari Sistem Prediksi ASI Eksklusif + XAI Panel LSTM.
-              {data.prediction !== undefined && ` Prediksi: ${(data.prediction * 100).toFixed(2)}%.`}
+              {data.prediction !== undefined && ` Prediksi: ${data.prediction.toFixed(2)}%.`}
               Berlaku tanpa tanda tangan basah.
             </p>
           </div>

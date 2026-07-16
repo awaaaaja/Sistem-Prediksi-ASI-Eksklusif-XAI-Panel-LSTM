@@ -27,11 +27,11 @@ export function ShapForcePlot({ features, expectedValue }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-dark-400">
-        <span>Base: {(expectedValue * 100).toFixed(2)}%</span>
-        <span className="text-emerald-400">Output: {(finalValue * 100).toFixed(2)}%</span>
+      <div className="flex items-center justify-between text-xs text-theme-secondary">
+        <span>Base: {expectedValue.toFixed(2)}%</span>
+        <span className="text-emerald-400">Output: {finalValue.toFixed(2)}%</span>
       </div>
-      <div className="relative h-8 overflow-hidden rounded-lg bg-dark-800">
+      <div className="relative h-8 overflow-hidden rounded-lg" style={{ backgroundColor: "var(--skeleton-base)" }}>
         {allImpacts.map((imp, i) => {
           const pct = (imp.shap_value / maxAbs) * 50
           const isPositive = imp.shap_value >= 0
@@ -39,7 +39,8 @@ export function ShapForcePlot({ features, expectedValue }: Props) {
             <motion.div
               key={`${imp.feature_name}-${imp.lag}`}
               initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
               transition={{ delay: i * 0.03, duration: 0.4 }}
               className="absolute top-0 h-full origin-left"
               style={{
@@ -52,15 +53,16 @@ export function ShapForcePlot({ features, expectedValue }: Props) {
             />
           )
         })}
-        <div className="absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 bg-dark-400" />
+        <div className="absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2" style={{ backgroundColor: "var(--text-muted)" }} />
       </div>
       <div className="flex flex-wrap gap-2">
         {features.map((f) => (
           <span
             key={f.feature}
-            className="rounded-full bg-dark-800 px-2.5 py-1 text-xs text-dark-300"
+            className="rounded-full px-2.5 py-1 text-xs text-theme-secondary"
+            style={{ backgroundColor: "var(--skeleton-base)" }}
           >
-            {f.feature}: {(f.mean_abs_impact * 100).toFixed(2)}%
+            {f.feature}: {f.mean_abs_impact.toFixed(2)}%
           </span>
         ))}
       </div>

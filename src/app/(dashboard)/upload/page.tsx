@@ -83,8 +83,8 @@ export default function UploadPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Upload Data</h1>
-        <p className="mt-1 text-sm text-dark-400">
+        <h1 className="text-2xl font-bold text-theme">Upload Data</h1>
+        <p className="mt-1 text-sm text-theme-secondary">
           Upload file CSV &rarr; Preview &rarr; Simpan ke Database &rarr; Prediksi
         </p>
       </div>
@@ -92,13 +92,14 @@ export default function UploadPage() {
       <GlowCard>
         <div
           onClick={() => inputRef.current?.click()}
-          className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-dark-600 py-12 transition-colors hover:border-emerald-500/50"
+          className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-theme py-12 transition-colors hover:border-emerald-500/50"
+          style={{ borderColor: "var(--border)" }}
         >
-          <CloudArrowUp size={40} className="mb-3 text-dark-400" />
-          <p className="text-sm text-dark-300">
+          <CloudArrowUp size={40} className="mb-3 text-theme-secondary" />
+          <p className="text-sm text-theme-secondary">
             {file ? file.name : "Klik untuk pilih file CSV"}
           </p>
-          <p className="mt-1 text-xs text-dark-500">
+          <p className="mt-1 text-xs text-muted">
             Format: Kode_Puskesmas, Tanggal, Jumlah_Bayi_6_Bulan, Jumlah_ASI_Eksklusif
           </p>
           <input ref={inputRef} type="file" accept=".csv" onChange={handleFile} className="hidden" />
@@ -109,7 +110,7 @@ export default function UploadPage() {
         <GlowCard>
           <div className="flex items-center justify-center gap-3 py-8">
             <Spinner size={24} className="animate-spin text-emerald-400" />
-            <p className="text-sm text-dark-300">Memvalidasi file...</p>
+            <p className="text-sm text-theme-secondary">Memvalidasi file...</p>
           </div>
         </GlowCard>
       )}
@@ -121,7 +122,7 @@ export default function UploadPage() {
               <div className="flex items-center gap-3">
                 <FileCsv size={24} className="text-emerald-400" />
                 <div>
-                  <p className="font-medium text-white">
+                  <p className="font-medium text-theme">
                     {kodes.length} Puskesmas &middot; {parsedRows.length} baris valid
                   </p>
                   {errors.length > 0 && (
@@ -147,7 +148,7 @@ export default function UploadPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-white/5 text-left text-dark-400">
+                    <tr className="border-b border-theme text-left text-theme-secondary">
                       <th className="pb-2 font-medium">Kode</th>
                       <th className="pb-2 font-medium">Tanggal</th>
                       <th className="pb-2 font-medium">Bayi 6B</th>
@@ -156,7 +157,7 @@ export default function UploadPage() {
                   </thead>
                   <tbody>
                     {parsedRows.map((row, i) => (
-                      <tr key={i} className="border-b border-white/5 text-white last:border-0">
+                      <tr key={i} className="border-b border-theme text-theme last:border-0 bg-hover-theme transition-colors">
                         <td className="py-2">{row.Kode_Puskesmas}</td>
                         <td className="py-2">{row.Tanggal}</td>
                         <td className="py-2">{row.Jumlah_Bayi_6_Bulan}</td>
@@ -190,10 +191,10 @@ export default function UploadPage() {
                 <WarningCircle size={28} className="text-red-400" />
               )}
               <div>
-                <p className="font-semibold text-white">
+                <p className="font-semibold text-theme">
                   {uploadResult.success ? "Upload Berhasil" : "Upload Sebagian Gagal"}
                 </p>
-                <p className="text-sm text-dark-400">
+                <p className="text-sm text-theme-secondary">
                   {uploadResult.inserted} baris tersimpan
                   {uploadResult.errors.length > 0 && `, ${uploadResult.errors.length} error`}
                 </p>
@@ -202,15 +203,15 @@ export default function UploadPage() {
           </GlowCard>
 
           <GlowCard>
-            <h2 className="mb-4 text-lg font-semibold text-white">Puskesmas Terupload</h2>
+            <h2 className="mb-4 text-lg font-semibold text-theme">Puskesmas Terupload</h2>
             <div className="space-y-2">
               {kodes.map((kode) => (
                 <Link
                   key={kode}
                   href={`/puskesmas/${encodeURIComponent(kode)}`}
-                  className="flex items-center justify-between rounded-lg border border-white/5 px-4 py-3 transition-colors hover:border-emerald-500/30 hover:bg-white/[0.02]"
+                  className="flex items-center justify-between rounded-lg border border-theme px-4 py-3 transition-colors hover:border-emerald-500/30 bg-hover-theme"
                 >
-                  <span className="text-sm font-medium text-white">{kode}</span>
+                  <span className="text-sm font-medium text-theme">{kode}</span>
                   <span className="flex items-center gap-1 text-xs text-emerald-400">
                     Lihat Detail <ArrowRight size={14} />
                   </span>

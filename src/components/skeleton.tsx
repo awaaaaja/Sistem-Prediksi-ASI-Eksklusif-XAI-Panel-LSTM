@@ -1,9 +1,5 @@
 export function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse rounded-lg bg-dark-800 ${className}`}
-    />
-  )
+  return <div className={`shimmer rounded-lg ${className}`} />
 }
 
 export function SkeletonCard() {

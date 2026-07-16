@@ -1,9 +1,31 @@
+export type Segmen = "SANGAT_BAIK" | "SEDANG" | "RENDAH"
+
+export interface SegmenInfo {
+  label: string
+  labelSingkat: string
+  color: string
+  bgClass: string
+  textClass: string
+  borderClass: string
+  range: string
+}
+
+export interface KecamatanDTO {
+  id: number
+  nama: string
+  latitude: number | null
+  longitude: number | null
+}
+
 export interface PuskesmasDTO {
   id: number
   kode: string
   nama: string
   alamat: string | null
-  kota: string | null
+  kecamatanId: number | null
+  kecamatan?: KecamatanDTO | null
+  latitude: number | null
+  longitude: number | null
   provinsi: string | null
   aktif: boolean
 }
@@ -79,4 +101,51 @@ export interface APIResponse<T> {
   success: boolean
   data?: T
   error?: string
+}
+
+export interface GeoFeatureProperties {
+  id?: number
+  nama: string
+  kode?: string
+  kecamatan?: string
+  puskesmas_count?: number
+  rata_cakupan: number | null
+  segmen: Segmen
+  alamat?: string
+}
+
+export interface GeoFeature {
+  type: "Feature"
+  properties: GeoFeatureProperties
+  geometry: {
+    type: "Point" | "MultiPolygon"
+    coordinates: number[] | number[][][][]
+  }
+}
+
+export interface GeoFeatureCollection {
+  type: "FeatureCollection"
+  features: GeoFeature[]
+}
+
+export interface MapDataResponse {
+  kecamatan: GeoFeatureCollection
+  puskesmas: GeoFeatureCollection
+  stats: {
+    totalKecamatan: number
+    totalPuskesmas: number
+    rataCakupanKota: number
+    segmenDominan: Segmen
+  }
+}
+
+export interface KecamatanDetail {
+  id: number
+  nama: string
+  rataCakupan: number
+  segmen: Segmen
+  puskesmasList: PuskesmasDTO[]
+  totalBayi: number
+  totalASI: number
+  trendData: { bulan: string; rataCakupan: number }[]
 }

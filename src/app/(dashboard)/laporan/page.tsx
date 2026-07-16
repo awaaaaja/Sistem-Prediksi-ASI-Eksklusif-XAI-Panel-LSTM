@@ -248,18 +248,18 @@ export default function LaporanPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Laporan</h1>
-        <p className="mt-1 text-sm text-dark-400">Export data & hasil prediksi ke CSV, JSON, atau PDF</p>
+        <h1 className="text-2xl font-bold text-theme">Laporan</h1>
+        <p className="mt-1 text-sm text-theme-secondary">Export data & hasil prediksi ke CSV, JSON, atau PDF</p>
       </div>
 
       <GlowCard>
         <div className="mb-4 flex items-center gap-4">
           <div className="flex-1">
-            <label className="mb-1.5 block text-xs text-dark-400">Filter Puskesmas</label>
+            <label className="mb-1.5 block text-xs text-theme-secondary">Filter Puskesmas</label>
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
-              className="w-full rounded-lg bg-dark-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-emerald-500"
+              className="w-full rounded-lg border border-theme bg-theme-secondary px-3 py-2 text-sm text-theme outline-none focus:ring-emerald-500"
             >
               <option value="">Semua Puskesmas</option>
               {puskesmasList.map((p) => (
