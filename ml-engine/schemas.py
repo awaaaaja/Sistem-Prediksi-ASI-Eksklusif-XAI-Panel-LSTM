@@ -6,7 +6,7 @@ class PredictRequest(BaseModel):
     puskesmas_id: int = Field(..., ge=1, le=999)
     history: List[List[float]] = Field(
         ..., min_length=12,
-        description="Array 2D [12 bulan x 7 fitur]: Jumlah_Bayi_6_Bulan, Jumlah_ASI_Eksklusif, Lag1_Target, Lag2_Target, Lag3_Target, Month_Sin, Month_Cos"
+        description="Array 2D [12 bulan x 8 fitur]: Jumlah_ASI_Eksklusif, Rasio_ASI_Bayi, Lag1_Target, Lag2_Target, Lag3_Target, Month_Sin, Month_Cos, Year_Trend"
     )
 
 
@@ -31,7 +31,7 @@ class ShapRequest(BaseModel):
     puskesmas_id: int = Field(..., ge=1, le=999)
     history: List[List[float]] = Field(
         ..., min_length=12,
-        description="Array 2D [12 bulan x 7 fitur] untuk kalkulasi SHAP"
+        description="Array 2D [12 bulan x 8 fitur] untuk kalkulasi SHAP"
     )
 
 

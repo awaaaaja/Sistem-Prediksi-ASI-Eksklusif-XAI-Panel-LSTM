@@ -1,0 +1,134 @@
+[
+  {
+    "nama": "Puskesmas Bungus",
+    "kecamatan": "Bungus Teluk Kabung",
+    "lat": -0.9800,
+    "lng": 100.2700
+  },
+  {
+    "nama": "Puskesmas Lubuk Kilangan",
+    "kecamatan": "Lubuk Kilangan",
+    "lat": -0.9300,
+    "lng": 100.2900
+  },
+  {
+    "nama": "Puskesmas Lubuk Begalung",
+    "kecamatan": "Lubuk Begalung",
+    "lat": -0.8800,
+    "lng": 100.2700
+  },
+  {
+    "nama": "Puskesmas Pegambiran",
+    "kecamatan": "Lubuk Begalung",
+    "lat": -0.8850,
+    "lng": 100.2800
+  },
+  {
+    "nama": "Puskesmas Seberang Padang",
+    "kecamatan": "Padang Selatan",
+    "lat": -0.9100,
+    "lng": 100.3250
+  },
+  {
+    "nama": "Puskesmas Pemancungan",
+    "kecamatan": "Padang Selatan",
+    "lat": -0.9000,
+    "lng": 100.3200
+  },
+  {
+    "nama": "Puskesmas Rawang",
+    "kecamatan": "Padang Selatan",
+    "lat": -0.8990,
+    "lng": 100.3150
+  },
+  {
+    "nama": "Puskesmas Andalas",
+    "kecamatan": "Padang Timur",
+    "lat": -0.9400,
+    "lng": 100.3700
+  },
+  {
+    "nama": "Puskesmas Padang Pasir",
+    "kecamatan": "Padang Barat",
+    "lat": -0.9470,
+    "lng": 100.3450
+  },
+  {
+    "nama": "Puskesmas Ulak Karang",
+    "kecamatan": "Padang Utara",
+    "lat": -0.9200,
+    "lng": 100.3200
+  },
+  {
+    "nama": "Puskesmas Air Tawar",
+    "kecamatan": "Padang Utara",
+    "lat": -0.9180,
+    "lng": 100.3300
+  },
+  {
+    "nama": "Puskesmas Alai",
+    "kecamatan": "Padang Utara",
+    "lat": -0.9150,
+    "lng": 100.3250
+  },
+  {
+    "nama": "Puskesmas Nanggalo",
+    "kecamatan": "Nanggalo",
+    "lat": -0.9600,
+    "lng": 100.3200
+  },
+  {
+    "nama": "Puskesmas Lapai",
+    "kecamatan": "Nanggalo",
+    "lat": -0.9650,
+    "lng": 100.3250
+  },
+  {
+    "nama": "Puskesmas Belimbing",
+    "kecamatan": "Kuranji",
+    "lat": -0.9600,
+    "lng": 100.3500
+  },
+  {
+    "nama": "Puskesmas Kuranji",
+    "kecamatan": "Kuranji",
+    "lat": -0.9550,
+    "lng": 100.3450
+  },
+  {
+    "nama": "Puskesmas Ambacang",
+    "kecamatan": "Kuranji",
+    "lat": -0.9500,
+    "lng": 100.3400
+  },
+  {
+    "nama": "Puskesmas Pauh",
+    "kecamatan": "Pauh",
+    "lat": -0.9600,
+    "lng": 100.3550
+  },
+  {
+    "nama": "Puskesmas Air Dingin",
+    "kecamatan": "Koto Tangah",
+    "lat": -0.9650,
+    "lng": 100.2900
+  },
+  {
+    "nama": "Puskesmas Lubuk Buaya",
+    "kecamatan": "Koto Tangah",
+    "lat": -0.9700,
+    "lng": 100.2850
+  },
+  {
+    "nama": "Puskesmas Ikur Koto",
+    "kecamatan": "Koto Tangah",
+    "lat": -0.9680,
+    "lng": 100.2950
+  },
+  {
+    "nama": "Puskesmas Anak Air",
+    "kecamatan": "Koto Tangah",
+    "lat": -0.9695,
+    "lng": 100.2980
+  }
+]

@@ -1,6 +1,22 @@
 {
-  "train_r2": -0.0121,
-  "mean_val_r2_per_pkm": -0.161,
-  "mae": 7.26,
-  "note": "Model predicts near-mean. Segment accuracy target > 80%."
+  "version": "v6",
+  "train_r2": 0.9850383996963501,
+  "val_r2": 0.9852043390274048,
+  "train_mae": 0.7055261135101318,
+  "val_mae": 0.809317946434021,
+  "segment_accuracy": 0.9685534591194969,
+  "n_features": 8,
+  "feature_names": [
+    "Jumlah_ASI_Eksklusif",
+    "Rasio_ASI_Bayi",
+    "Lag1_Target",
+    "Lag2_Target",
+    "Lag3_Target",
+    "Month_Sin",
+    "Month_Cos",
+    "Year_Trend"
+  ],
+  "prediction_std": 8.071233749389648,
+  "actual_std": 8.576733589172363,
+  "note": "Global model with Rasio_ASI_Bayi (r=0.89). All puskesmas pooled, temporal 80/20 split."
 }

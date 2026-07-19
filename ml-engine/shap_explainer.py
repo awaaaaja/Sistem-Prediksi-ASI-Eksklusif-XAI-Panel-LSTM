@@ -9,12 +9,17 @@ logger = logging.getLogger(__name__)
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 FEATURE_NAMES = [
-    "Jumlah_Bayi_6_Bulan", "Jumlah_ASI_Eksklusif",
-    "Lag1_Target", "Lag2_Target", "Lag3_Target",
-    "Month_Sin", "Month_Cos"
+    "Jumlah_ASI_Eksklusif",
+    "Rasio_ASI_Bayi",
+    "Lag1_Target",
+    "Lag2_Target",
+    "Lag3_Target",
+    "Month_Sin",
+    "Month_Cos",
+    "Year_Trend",
 ]
 WINDOW_SIZE = 12
-N_FEATURES = 7
+N_FEATURES = 8
 
 explainer = None
 background_data = None
@@ -60,8 +65,13 @@ def compute_shap(input_tensor: np.ndarray, model=None) -> tuple:
 def format_shap(shap_arr, expected_value, puskesmas_id: int, scaler_y=None) -> dict:
     # Inverse-transform SHAP values and expected_value from scaled to percentage space
     if scaler_y is not None:
-        scale = float(scaler_y.data_max_[0] - scaler_y.data_min_[0])
-        offset = float(scaler_y.data_min_[0])
+        # Support both MinMaxScaler and StandardScaler
+        if hasattr(scaler_y, "data_max_"):
+            scale = float(scaler_y.data_max_[0] - scaler_y.data_min_[0])
+            offset = float(scaler_y.data_min_[0])
+        else:
+            scale = float(scaler_y.scale_[0])
+            offset = float(scaler_y.mean_[0])
         expected_value = expected_value * scale + offset
     else:
         scale = 1.0

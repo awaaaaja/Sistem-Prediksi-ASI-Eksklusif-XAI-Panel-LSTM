@@ -19,7 +19,7 @@ export default function PetaPage() {
           Peta Sebaran ASI Eksklusif
         </h1>
         <p className="mt-1 text-theme-secondary">
-          Visualisasi geografis cakupan ASI Eksklusif per Puskesmas dan Kecamatan se-Kota Padang
+          Visualisasi geografis cakupan ASI Eksklusif per Puskesmas dan Kecamatan se-Kota Padang — filter tahun untuk melihat perubahan segmen
         </p>
       </div>
       <MapContainer />

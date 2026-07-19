@@ -49,9 +49,7 @@ export function ProgressRing({
           style={{ strokeDashoffset }}
         />
       </svg>
-      <span className="absolute text-sm font-bold text-theme">
-        {value.toFixed(1)}{suffix}
-      </span>
+      
     </div>
   )
 }

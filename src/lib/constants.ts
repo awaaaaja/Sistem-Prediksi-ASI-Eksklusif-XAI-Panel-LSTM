@@ -1,9 +1,14 @@
 export const WINDOW_SIZE = 12
-export const N_FEATURES = 7
+export const N_FEATURES = 8
 export const FEATURES = [
-  "Jumlah_Bayi_6_Bulan", "Jumlah_ASI_Eksklusif",
-  "Lag1_Target", "Lag2_Target", "Lag3_Target",
-  "Month_Sin", "Month_Cos"
+  "Jumlah_ASI_Eksklusif",
+  "Rasio_ASI_Bayi",
+  "Lag1_Target",
+  "Lag2_Target",
+  "Lag3_Target",
+  "Month_Sin",
+  "Month_Cos",
+  "Year_Trend",
 ] as const
 export const ML_ENGINE_URL = process.env.ML_ENGINE_URL || "http://localhost:8000"
 
@@ -33,6 +38,13 @@ export const PUSKESMAS_LIST = [
   { kode: "PKM23", nama: "BUNGUS", kecamatan: "Bungus Teluk Kabung" },
   { kode: "PKM24", nama: "PAUH", kecamatan: "Pauh" },
 ] as const
+
+export const SEGMEN_THRESHOLDS = {
+  SANGAT_BAIK: 80,
+  SEDANG: 50,
+} as const
+
+export const TAHUN_LIST = [2021, 2022, 2023, 2024, 2025, 2026] as const
 
 export const KECAMATAN_LIST = [
   { id: 1, nama: "Koto Tangah" },

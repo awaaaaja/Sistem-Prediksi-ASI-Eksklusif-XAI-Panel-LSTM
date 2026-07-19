@@ -128,6 +128,11 @@ export interface GeoFeatureCollection {
   features: GeoFeature[]
 }
 
+export interface DemografiInfo {
+  penduduk: number
+  kepadatan: number
+}
+
 export interface MapDataResponse {
   kecamatan: GeoFeatureCollection
   puskesmas: GeoFeatureCollection
@@ -137,6 +142,8 @@ export interface MapDataResponse {
     rataCakupanKota: number
     segmenDominan: Segmen
   }
+  demografi: Record<string, DemografiInfo>
+  tahunTersedia: number[]
 }
 
 export interface KecamatanDetail {

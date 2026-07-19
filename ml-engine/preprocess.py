@@ -1,11 +1,16 @@
 import numpy as np
 
 WINDOW_SIZE = 12
-N_FEATURES = 7
+N_FEATURES = 8
 FEATURE_NAMES = [
-    "Jumlah_Bayi_6_Bulan", "Jumlah_ASI_Eksklusif",
-    "Lag1_Target", "Lag2_Target", "Lag3_Target",
-    "Month_Sin", "Month_Cos"
+    "Jumlah_ASI_Eksklusif",
+    "Rasio_ASI_Bayi",
+    "Lag1_Target",
+    "Lag2_Target",
+    "Lag3_Target",
+    "Month_Sin",
+    "Month_Cos",
+    "Year_Trend",
 ]
 
 

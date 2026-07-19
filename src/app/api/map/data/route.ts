@@ -1,15 +1,35 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { PUSKESMAS_COORDS, KECAMATAN_DEMOGRAFI } from "@/data/puskesmas-coordinates"
+import { SEGMEN_THRESHOLDS, KECAMATAN_LIST } from "@/lib/constants"
+import type { Segmen } from "@/types"
+import fs from "fs"
+import path from "path"
 
-function getSegmen(nilai: number | null): "SANGAT_BAIK" | "SEDANG" | "RENDAH" {
+function getSegmen(nilai: number | null): Segmen {
   if (nilai === null || nilai === undefined) return "RENDAH"
-  if (nilai >= 80) return "SANGAT_BAIK"
-  if (nilai >= 60) return "SEDANG"
+  if (nilai >= SEGMEN_THRESHOLDS.SANGAT_BAIK) return "SANGAT_BAIK"
+  if (nilai >= SEGMEN_THRESHOLDS.SEDANG) return "SEDANG"
   return "RENDAH"
 }
 
-export async function GET() {
-  // Ambil semua puskesmas + kecamatan
+const KEC_NAMA_TO_ID = Object.fromEntries(
+  KECAMATAN_LIST.map((k) => [k.nama, k.id])
+)
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+
+  const tahunDiDB = await prisma.$queryRawUnsafe<{ tahun: number }[]>(
+    `SELECT DISTINCT YEAR(tanggal) as tahun FROM data_bulanan ORDER BY tahun DESC`
+  )
+  const tahunTersedia = tahunDiDB.map((r) => r.tahun)
+  const maxTahun = tahunTersedia.length > 0 ? Math.max(...tahunTersedia) : 0
+
+  const tahunParam = searchParams.get("tahun")
+  const tahunReq = tahunParam ? parseInt(tahunParam, 10) : maxTahun
+  const tahun = tahunTersedia.includes(tahunReq) ? tahunReq : maxTahun
+
   const puskesmasList = await prisma.puskesmas.findMany({
     include: { kecamatan: true },
     orderBy: { kode: "asc" },
@@ -18,29 +38,27 @@ export async function GET() {
   const kecamatanList = await prisma.kecamatan.findMany({
     orderBy: { nama: "asc" },
   })
+  const kecNamaMap = new Map(kecamatanList.map((k) => [k.nama, k]))
 
-  // Ambil data terbaru per puskesmas untuk segmen
-  const latestDataPerPkm = await prisma.$queryRawUnsafe<{
-    puskesmas_id: number
-    rata_cakupan: number
-  }[]>(`
-    SELECT d.puskesmas_id, AVG(d.persentase_cakupan) as rata_cakupan
-    FROM data_bulanan d
-    INNER JOIN (
-      SELECT puskesmas_id, MAX(tanggal) as max_tgl
-      FROM data_bulanan
-      GROUP BY puskesmas_id
-    ) latest ON d.puskesmas_id = latest.puskesmas_id
-      AND d.tanggal >= DATE_SUB(latest.max_tgl, INTERVAL 3 MONTH)
-    GROUP BY d.puskesmas_id
-  `)
-
-  const cakupanMap = new Map<number, number>()
-  for (const row of latestDataPerPkm) {
-    cakupanMap.set(row.puskesmas_id, row.rata_cakupan)
+  let cakupanMap = new Map<number, number>()
+  if (tahun > 0) {
+    const dataPerPkm = await prisma.$queryRawUnsafe<{
+      puskesmas_id: number
+      rata_cakupan: number
+    }[]>(
+      `
+      SELECT d.puskesmas_id, AVG(d.persentase_cakupan) as rata_cakupan
+      FROM data_bulanan d
+      WHERE YEAR(d.tanggal) = ?
+      GROUP BY d.puskesmas_id
+      `,
+      tahun
+    )
+    for (const row of dataPerPkm) {
+      cakupanMap.set(row.puskesmas_id, row.rata_cakupan)
+    }
   }
 
-  // Hitung rata-rata per kecamatan
   const kecamatanCakupan: Record<number, { total: number; count: number }> = {}
   for (const p of puskesmasList) {
     if (!p.kecamatanId) continue
@@ -54,52 +72,87 @@ export async function GET() {
     }
   }
 
-  // Build GeoJSON Puskesmas
-  const puskesmasFeatures = puskesmasList
-    .filter((p) => p.latitude && p.longitude)
-    .map((p) => {
-      const cakupan = cakupanMap.get(p.id)
+  const puskesmasFeatures = puskesmasList.map((p) => {
+    const coord = PUSKESMAS_COORDS[p.kode] ?? (
+      (p.latitude && p.longitude)
+        ? { lat: p.latitude, lng: p.longitude }
+        : undefined
+    )
+    const cakupan = cakupanMap.get(p.id)
+    return {
+      type: "Feature" as const,
+      properties: {
+        id: p.id,
+        nama: p.nama,
+        kode: p.kode,
+        kecamatan: p.kecamatan?.nama ?? "",
+        rata_cakupan: cakupan ?? null,
+        segmen: getSegmen(cakupan ?? null),
+        alamat: p.alamat,
+      },
+      geometry: {
+        type: "Point" as const,
+        coordinates: coord
+          ? [coord.lng, coord.lat]
+          : [0, 0],
+      },
+    }
+  })
+
+  let geoJSON: { type: string; features: any[] } | null = null
+  try {
+    const filePath = path.join(process.cwd(), "public", "data", "kecamatan-padang.geo.json")
+    const raw = fs.readFileSync(filePath, "utf-8")
+    geoJSON = JSON.parse(raw)
+  } catch {
+    // fallback: kecamatan sebagai point
+    geoJSON = null
+  }
+
+  let kecamatanFeatures: any[]
+  if (geoJSON) {
+    kecamatanFeatures = geoJSON.features.map((f: any) => {
+      const nm_kecamatan = f.properties.nm_kecamatan
+      const kecDb = kecNamaMap.get(nm_kecamatan)
+      const kecId = kecDb?.id ?? KEC_NAMA_TO_ID[nm_kecamatan]
+      const ck = kecId ? kecamatanCakupan[kecId] : undefined
+      const avg = ck && ck.count > 0 ? ck.total / ck.count : null
+      const pkmCount = kecDb
+        ? puskesmasList.filter((p) => p.kecamatanId === kecDb.id).length
+        : 0
       return {
-        type: "Feature" as const,
+        ...f,
         properties: {
-          id: p.id,
-          nama: p.nama,
-          kode: p.kode,
-          kecamatan: p.kecamatan?.nama ?? "",
-          rata_cakupan: cakupan ?? null,
-          segmen: getSegmen(cakupan ?? null),
-          alamat: p.alamat,
-        },
-        geometry: {
-          type: "Point" as const,
-          coordinates: [p.longitude!, p.latitude!],
+          ...f.properties,
+          id: kecId ?? null,
+          nama: nm_kecamatan,
+          rata_cakupan: avg ? Math.round(avg * 100) / 100 : null,
+          segmen: getSegmen(avg),
+          puskesmas_count: pkmCount,
         },
       }
     })
-
-  // Build GeoJSON Kecamatan (marker di tengah kecamatan)
-  const kecamatanFeatures = kecamatanList
-    .filter((k) => k.latitude && k.longitude)
-    .map((k) => {
+  } else {
+    kecamatanFeatures = kecamatanList.map((k) => {
       const ck = kecamatanCakupan[k.id]
-      const avg = ck ? ck.total / ck.count : null
+      const avg = ck && ck.count > 0 ? ck.total / ck.count : null
       return {
-        type: "Feature" as const,
+        type: "Feature",
         properties: {
           id: k.id,
           nama: k.nama,
-          rata_cakupan: avg,
+          rata_cakupan: avg ? Math.round(avg * 100) / 100 : null,
           segmen: getSegmen(avg),
           puskesmas_count: puskesmasList.filter((p) => p.kecamatanId === k.id).length,
         },
         geometry: {
-          type: "Point" as const,
-          coordinates: [k.longitude!, k.latitude!],
+          type: "Point",
+          coordinates: k.longitude && k.latitude ? [k.longitude, k.latitude] : [0, 0],
         },
       }
     })
+  }
 
-  // Stats kota
   const allCakupan = puskesmasFeatures
     .map((f) => f.properties.rata_cakupan)
     .filter((v): v is number => v !== null)
@@ -125,5 +178,7 @@ export async function GET() {
       rataCakupanKota: Math.round(rataKota * 100) / 100,
       segmenDominan: dominan,
     },
+    demografi: KECAMATAN_DEMOGRAFI,
+    tahunTersedia,
   })
 }
