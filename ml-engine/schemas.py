@@ -35,16 +35,10 @@ class ShapRequest(BaseModel):
     )
 
 
-class ShapImpact(BaseModel):
-    lag: int
-    shap_value: float
-    feature_name: str
-
-
 class ShapFeature(BaseModel):
     feature: str
+    shap_value: float
     mean_abs_impact: float
-    impacts: List[ShapImpact]
 
 
 class ShapResponse(BaseModel):

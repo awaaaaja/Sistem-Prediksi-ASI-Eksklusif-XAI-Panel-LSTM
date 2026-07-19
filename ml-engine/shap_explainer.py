@@ -3,6 +3,8 @@ import logging
 
 import numpy as np
 import shap
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +25,13 @@ N_FEATURES = 8
 
 explainer = None
 background_data = None
+wrapper_model = None
 
 
-def init_shap(model, bg_path=None):
+def init_shap(original_model, bg_path=None):
+    global explainer, background_data, wrapper_model
+
     bg_path = bg_path or os.path.join(_BASE_DIR, "models", "background_data.npy")
-    global explainer, background_data
 
     try:
         background_data = np.load(bg_path)
@@ -36,15 +40,36 @@ def init_shap(model, bg_path=None):
         background_data = np.random.randn(100, WINDOW_SIZE, N_FEATURES).astype(np.float32)
         logger.warning(f"Using random background, shape {background_data.shape}")
 
-    explainer = shap.GradientExplainer(model, background_data)
-    logger.info("SHAP GradientExplainer initialized")
+    # Build wrapper: original model takes (12,8) → slices timestep 12 → Dense layers
+    # Wrapper takes only last timestep (8,) so SHAP can attribute correctly
+    inp = Input(shape=(N_FEATURES,), name="shap_input")
+    x = original_model.get_layer("dense_1")(inp)
+    x = original_model.get_layer("bn_1")(x)
+    x = original_model.get_layer("dropout_1")(x, training=False)
+    x = original_model.get_layer("dense_2")(x)
+    out = original_model.get_layer("output")(x)
+    wrapper_model = Model(inputs=inp, outputs=out, name="shap_wrapper")
+    wrapper_model.compile()
+
+    # Background: take only last timestep
+    bg_last = background_data[:, -1, :]
+    logger.info(f"Wrapper input shape: {wrapper_model.input_shape}, bg shape: {bg_last.shape}")
+
+    explainer = shap.DeepExplainer(wrapper_model, bg_last)
+    logger.info("SHAP DeepExplainer initialized on last-timestep wrapper")
 
 
 def compute_shap(input_tensor: np.ndarray, model=None) -> tuple:
     if explainer is None:
         raise RuntimeError("SHAP Explainer belum diinisialisasi.")
 
-    shap_values = explainer.shap_values(input_tensor)
+    # Take only last timestep
+    if input_tensor.ndim == 3:
+        input_last = input_tensor[:, -1, :]
+    else:
+        input_last = input_tensor
+
+    shap_values = explainer.shap_values(input_last)
 
     if isinstance(shap_values, list):
         shap_arr = shap_values[0]
@@ -52,9 +77,10 @@ def compute_shap(input_tensor: np.ndarray, model=None) -> tuple:
         shap_arr = shap_values
 
     ev = 0.0
-    if model is not None:
+    if wrapper_model is not None:
         try:
-            preds = model.predict(background_data[:50], verbose=0)
+            bg_last = background_data[:, -1, :]
+            preds = wrapper_model.predict(bg_last, verbose=0)
             ev = float(np.mean(preds))
         except Exception as e:
             logger.warning(f"Expected value failed: {e}")
@@ -63,9 +89,7 @@ def compute_shap(input_tensor: np.ndarray, model=None) -> tuple:
 
 
 def format_shap(shap_arr, expected_value, puskesmas_id: int, scaler_y=None) -> dict:
-    # Inverse-transform SHAP values and expected_value from scaled to percentage space
     if scaler_y is not None:
-        # Support both MinMaxScaler and StandardScaler
         if hasattr(scaler_y, "data_max_"):
             scale = float(scaler_y.data_max_[0] - scaler_y.data_min_[0])
             offset = float(scaler_y.data_min_[0])
@@ -80,26 +104,13 @@ def format_shap(shap_arr, expected_value, puskesmas_id: int, scaler_y=None) -> d
     features = []
 
     for feat_idx in range(N_FEATURES):
-        impacts = []
-        for lag in range(WINDOW_SIZE):
-            if shap_arr.ndim == 4:
-                val = float(shap_arr[0, lag, feat_idx, 0])
-            elif shap_arr.ndim == 3:
-                val = float(shap_arr[lag, feat_idx])
-            else:
-                val = float(shap_arr[lag, feat_idx])
-            shap_pct = val * scale
-            impacts.append({
-                "lag": WINDOW_SIZE - lag,
-                "shap_value": round(shap_pct, 6),
-                "feature_name": FEATURE_NAMES[feat_idx],
-            })
+        val = float(shap_arr[0, feat_idx])
 
-        mean_abs = sum(abs(i["shap_value"]) for i in impacts) / len(impacts)
+        shap_pct = val * scale
         features.append({
             "feature": FEATURE_NAMES[feat_idx],
-            "mean_abs_impact": round(mean_abs, 6),
-            "impacts": impacts,
+            "shap_value": round(shap_pct, 6),
+            "mean_abs_impact": round(abs(shap_pct), 6),
         })
 
     return {

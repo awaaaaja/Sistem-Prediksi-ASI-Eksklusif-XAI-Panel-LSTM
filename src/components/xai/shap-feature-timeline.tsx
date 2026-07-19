@@ -2,16 +2,10 @@
 
 import { motion } from "framer-motion"
 
-interface ShapImpact {
-  lag: number
-  shap_value: number
-  feature_name: string
-}
-
 interface ShapFeature {
   feature: string
+  shap_value: number
   mean_abs_impact: number
-  impacts: ShapImpact[]
 }
 
 interface Props {
@@ -19,43 +13,40 @@ interface Props {
 }
 
 export function ShapFeatureTimeline({ features }: Props) {
-  const allValues = features.flatMap((f) => f.impacts.map((i) => i.shap_value))
-  const maxAbs = Math.max(...allValues.map(Math.abs), 0.001)
+  const maxAbs = Math.max(...features.map((f) => Math.abs(f.shap_value)), 0.001)
 
   return (
     <div className="space-y-5">
-      {features.map((f) => (
-        <div key={f.feature}>
-          <p className="mb-2 text-xs font-medium text-theme-secondary">{f.feature}</p>
-          <div className="flex items-end gap-1">
-            {f.impacts.map((imp, i) => {
-              const pct = (imp.shap_value / maxAbs) * 100
-              const isPositive = imp.shap_value >= 0
-              return (
-                <div key={imp.lag} className="flex flex-1 flex-col items-center">
-                  <motion.div
-                    initial={{ scaleY: 0 }}
-                    whileInView={{ scaleY: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.04, duration: 0.3 }}
-                    className="w-full rounded-t-sm"
-                    style={{
-                      height: `${Math.abs(pct)}%`,
-                      minHeight: 4,
-                      maxHeight: 60,
-                      background: isPositive
-                        ? "linear-gradient(180deg, #10b981, #059669)"
-                        : "linear-gradient(180deg, #3b82f6, #2563eb)",
-                      transformOrigin: isPositive ? "bottom" : "top",
-                    }}
-                  />
-                  <span className="mt-1 text-[10px] text-muted">{imp.lag}</span>
-                </div>
-              )
-            })}
+      {features.map((f, i) => {
+        const pct = (f.shap_value / maxAbs) * 100
+        const isPositive = f.shap_value >= 0
+        return (
+          <div key={f.feature}>
+            <p className="mb-2 text-xs font-medium text-theme-secondary">{f.feature}</p>
+            <div className="flex items-center gap-3">
+              <span className="w-8 text-right text-[10px] text-muted">{isPositive ? "+" : ""}{f.shap_value.toFixed(2)}%</span>
+              <div className="flex-1">
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  whileInView={{ scaleX: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05, duration: 0.4 }}
+                  className="h-3 rounded"
+                  style={{
+                    width: `${Math.abs(pct)}%`,
+                    minWidth: 4,
+                    background: isPositive
+                      ? "linear-gradient(90deg, #10b981, #059669)"
+                      : "linear-gradient(90deg, #3b82f6, #2563eb)",
+                    transformOrigin: isPositive ? "left" : "right",
+                    marginLeft: isPositive ? 0 : `${100 - Math.abs(pct)}%`,
+                  }}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

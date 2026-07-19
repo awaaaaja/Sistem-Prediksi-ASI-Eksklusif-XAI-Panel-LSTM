@@ -145,10 +145,26 @@ async def shap_explain(req: ShapRequest):
 
         shap_values, expected_value = shap_explainer.compute_shap(tensor, model=m)
 
+        # SHAP validation: expected_value + sum(shap) should ≈ model prediction
+        sum_shap = float(np.sum(shap_values))
+        pred_scaled = float(m.predict(tensor, verbose=0).flatten()[0])
+        if model_loader.scaler_Y is not None:
+            sy = model_loader.scaler_Y
+            scale = float(sy.scale_[0])
+            offset = float(sy.mean_[0])
+            pred_pct = pred_scaled * scale + offset
+            ev_pct = expected_value * scale + offset
+            sum_shap_pct = sum_shap * scale
+        else:
+            pred_pct = pred_scaled
+            ev_pct = expected_value
+            sum_shap_pct = sum_shap
+
         logger.info(
             f"SHAP puskesmas {req.puskesmas_id}: "
-            f"expected_value={expected_value}, "
-            f"shap_values shapes={[sv.shape for sv in shap_values]}"
+            f"ev={expected_value:.4f}(scaled) {ev_pct:.2f}%(pct), "
+            f"sum_shap={sum_shap:.4f}(scaled) {sum_shap_pct:.4f}%(pct), "
+            f"ev+sum={ev_pct + sum_shap_pct:.2f}% vs pred={pred_pct:.2f}%"
         )
 
         return shap_explainer.format_shap(shap_values, expected_value, req.puskesmas_id, scaler_y=model_loader.scaler_Y)

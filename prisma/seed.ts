@@ -116,7 +116,7 @@ async function main() {
 
   // 4. Seed Data Bulanan dari CSV
   console.log("\nMembaca data CSV...")
-  const csvPath = path.join(__dirname, "..", "data_master_2021_2024.csv")
+  const csvPath = path.join(__dirname, "..", "data_master_2021_2024_scaled.csv")
   if (!fs.existsSync(csvPath)) {
     console.error(`  ✗ File CSV tidak ditemukan: ${csvPath}`)
     console.log("\nSeed selesai dengan data dasar (kecamatan + puskesmas).")

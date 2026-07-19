@@ -49,7 +49,7 @@ EPOCHS = 300
 BATCH_SIZE = 32
 PATIENCE = 50
 MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
-CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data_master_2021_2024.csv")
+CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data_master_2021_2024_scaled.csv")
 
 
 def get_segment(val):

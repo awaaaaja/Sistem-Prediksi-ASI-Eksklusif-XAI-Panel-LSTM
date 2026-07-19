@@ -33,16 +33,10 @@ interface HistoryRow {
   persentaseCakupan: number | null
 }
 
-interface ShapImpact {
-  lag: number
-  shap_value: number
-  feature_name: string
-}
-
 interface ShapFeature {
   feature: string
+  shap_value: number
   mean_abs_impact: number
-  impacts: ShapImpact[]
 }
 
 interface ShapData {
@@ -229,7 +223,7 @@ export default function DetailPage({ params }: { params: { id: string } }) {
             </GlowCard>
 
             <GlowCard>
-              <h2 className="mb-4 text-lg font-semibold text-theme">Feature Timeline (12 Lag)</h2>
+              <h2 className="mb-4 text-lg font-semibold text-theme">Feature Contribution</h2>
               <ShapFeatureTimeline features={shapData.features} />
             </GlowCard>
           </div>
@@ -239,15 +233,12 @@ export default function DetailPage({ params }: { params: { id: string } }) {
             <div className="space-y-3 text-sm text-theme-secondary">
               {shapData.features.map((f) => (
                 <p key={f.feature}>
-                  <span className="font-medium text-theme">{f.feature}</span> — kontribusi rata-rata{" "}
-                  <span className={f.mean_abs_impact >= 0 ? "text-emerald-400" : "text-cyan-400"}>
-                      {f.mean_abs_impact >= 0 ? "+" : ""}
-                    {f.mean_abs_impact.toFixed(2)}%
+                  <span className="font-medium text-theme">{f.feature}</span> — kontribusi{" "}
+                  <span className={f.shap_value >= 0 ? "text-emerald-400" : "text-cyan-400"}>
+                      {f.shap_value >= 0 ? "+" : ""}
+                    {f.shap_value.toFixed(2)}%
                   </span>{" "}
-                  terhadap prediksi. Lag paling berpengaruh:{" "}
-                  <span className="text-theme">
-                    t-{f.impacts.reduce((a, b) => Math.abs(a.shap_value) > Math.abs(b.shap_value) ? a : b).lag}
-                  </span>.
+                  terhadap prediksi.
                 </p>
               ))}
               <p className="mt-3 text-muted">

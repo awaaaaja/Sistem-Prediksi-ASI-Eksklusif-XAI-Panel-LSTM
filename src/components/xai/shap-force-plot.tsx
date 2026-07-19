@@ -2,16 +2,10 @@
 
 import { motion } from "framer-motion"
 
-interface ShapImpact {
-  lag: number
-  shap_value: number
-  feature_name: string
-}
-
 interface ShapFeature {
   feature: string
+  shap_value: number
   mean_abs_impact: number
-  impacts: ShapImpact[]
 }
 
 interface Props {
@@ -20,10 +14,9 @@ interface Props {
 }
 
 export function ShapForcePlot({ features, expectedValue }: Props) {
-  const allImpacts = features.flatMap((f) => f.impacts)
-  const maxAbs = Math.max(...allImpacts.map((i) => Math.abs(i.shap_value)), 0.001)
-  const totalImpact = allImpacts.reduce((s, i) => s + i.shap_value, 0)
+  const totalImpact = features.reduce((s, f) => s + f.shap_value, 0)
   const finalValue = expectedValue + totalImpact
+  const maxAbs = Math.max(...features.map((f) => Math.abs(f.shap_value)), 0.001)
 
   return (
     <div className="space-y-3">
@@ -32,16 +25,16 @@ export function ShapForcePlot({ features, expectedValue }: Props) {
         <span className="text-emerald-400">Output: {finalValue.toFixed(2)}%</span>
       </div>
       <div className="relative h-8 overflow-hidden rounded-lg" style={{ backgroundColor: "var(--skeleton-base)" }}>
-        {allImpacts.map((imp, i) => {
-          const pct = (imp.shap_value / maxAbs) * 50
-          const isPositive = imp.shap_value >= 0
+        {features.map((f, i) => {
+          const pct = (f.shap_value / maxAbs) * 50
+          const isPositive = f.shap_value >= 0
           return (
             <motion.div
-              key={`${imp.feature_name}-${imp.lag}`}
+              key={f.feature}
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.03, duration: 0.4 }}
+              transition={{ delay: i * 0.05, duration: 0.4 }}
               className="absolute top-0 h-full origin-left"
               style={{
                 left: `calc(50% + ${isPositive ? 0 : pct}%)`,
@@ -62,7 +55,7 @@ export function ShapForcePlot({ features, expectedValue }: Props) {
             className="rounded-full px-2.5 py-1 text-xs text-theme-secondary"
             style={{ backgroundColor: "var(--skeleton-base)" }}
           >
-            {f.feature}: {f.mean_abs_impact.toFixed(2)}%
+            {f.feature}: {f.shap_value >= 0 ? "+" : ""}{f.shap_value.toFixed(2)}%
           </span>
         ))}
       </div>

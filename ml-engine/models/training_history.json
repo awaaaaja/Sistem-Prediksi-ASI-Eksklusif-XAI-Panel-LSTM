@@ -1,10 +1,10 @@
 {
   "version": "v6",
-  "train_r2": 0.9850383996963501,
-  "val_r2": 0.9852043390274048,
-  "train_mae": 0.7055261135101318,
-  "val_mae": 0.809317946434021,
-  "segment_accuracy": 0.9685534591194969,
+  "train_r2": 0.9937334060668945,
+  "val_r2": 0.9945371150970459,
+  "train_mae": 0.19672946631908417,
+  "val_mae": 0.1777425855398178,
+  "segment_accuracy": 0.9874213836477987,
   "n_features": 8,
   "feature_names": [
     "Jumlah_ASI_Eksklusif",
@@ -16,7 +16,7 @@
     "Month_Cos",
     "Year_Trend"
   ],
-  "prediction_std": 8.071233749389648,
-  "actual_std": 8.576733589172363,
+  "prediction_std": 3.0212512016296387,
+  "actual_std": 3.10571026802063,
   "note": "Global model with Rasio_ASI_Bayi (r=0.89). All puskesmas pooled, temporal 80/20 split."
 }

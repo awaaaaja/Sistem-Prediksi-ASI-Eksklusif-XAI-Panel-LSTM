@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from feature_engineering import engineer_features, create_sequences, WINDOW_SIZE, N_FEATURES, FEATURE_NAMES
 
 MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
-CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data_master_2021_2024.csv")
+CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data_master_2021_2024_scaled.csv")
 
 
 def evaluate_per_puskesmas():
