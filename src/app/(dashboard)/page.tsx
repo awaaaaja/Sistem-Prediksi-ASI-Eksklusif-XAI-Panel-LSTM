@@ -14,7 +14,7 @@ import { StatSkeleton } from "@/components/ui/skeleton-shimmer"
 import { useToast } from "@/components/ui/toast"
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Legend, Area, AreaChart,
+  ResponsiveContainer, Legend, Area, AreaChart, Cell,
 } from "recharts"
 import { PUSKESMAS_LIST, KECAMATAN_LIST, TAHUN_LIST } from "@/lib/constants"
 
@@ -95,6 +95,8 @@ export default function DashboardPage() {
   const [segmentFilter, setSegmentFilter] = useState<string | null>(null)
   const [kecamatanFilter, setKecamatanFilter] = useState<string | null>(null)
   const [tahunFilter, setTahunFilter] = useState<string>("")
+  const [predictingAll, setPredictingAll] = useState(false)
+  const [allPredictions, setAllPredictions] = useState<{ kode: string; nama: string; nilaiPrediksi: number; error?: string }[] | null>(null)
   const { toast } = useToast()
 
   const SEGMEN_THRESHOLDS = { SANGAT_BAIK: 80, SEDANG: 50 }
@@ -140,6 +142,26 @@ export default function DashboardPage() {
     }
     load()
   }, [toast, tahunFilter])
+
+  async function handlePredictAll() {
+    setPredictingAll(true)
+    setAllPredictions(null)
+    try {
+      const res = await fetch("/api/predict/all", { method: "POST" })
+      const data = await res.json()
+      if (data.success) {
+        setAllPredictions(data.results.filter((r: { error?: string }) => !r.error))
+        const success = data.results.filter((r: { error?: string }) => !r.error).length
+        const failed = data.results.filter((r: { error?: string }) => r.error).length
+        toast("success", `Prediksi selesai: ${success} berhasil, ${failed} gagal`)
+      } else {
+        toast("error", data.error || "Gagal melakukan prediksi semua")
+      }
+    } catch {
+      toast("error", "Gagal terhubung ke server")
+    }
+    setPredictingAll(false)
+  }
 
   const stats = data ? [
     {
@@ -365,7 +387,20 @@ export default function DashboardPage() {
 
       <GlowCard delay={0.3}>
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold text-theme">Daftar Puskesmas</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-theme">Daftar Puskesmas</h2>
+            <button
+              onClick={handlePredictAll}
+              disabled={predictingAll}
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-all hover:from-cyan-500 hover:to-emerald-500 disabled:opacity-50"
+            >
+              {predictingAll ? (
+                <><svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Memprediksi...</>
+              ) : (
+                <><Lightning size={14} weight="fill" />Prediksi Semua</>
+              )}
+            </button>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <MagnifyingGlass size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -430,6 +465,46 @@ export default function DashboardPage() {
             </button>
           ))}
         </div>
+
+        {allPredictions && allPredictions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mb-6 overflow-hidden rounded-xl border border-theme bg-theme-secondary/50 p-4"
+          >
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-theme">Hasil Prediksi Semua Puskesmas</h3>
+              <div className="flex flex-wrap gap-3 text-xs text-theme-secondary">
+                <span>Rata-rata: <strong className="text-cyan-400">{(allPredictions.reduce((s, r) => s + r.nilaiPrediksi, 0) / allPredictions.length).toFixed(2)}%</strong></span>
+                <span>Sangat Baik: <strong className="text-emerald-400">{allPredictions.filter(r => r.nilaiPrediksi >= 80).length}</strong></span>
+                <span>Sedang: <strong className="text-yellow-400">{allPredictions.filter(r => r.nilaiPrediksi >= 50 && r.nilaiPrediksi < 80).length}</strong></span>
+                <span>Rendah: <strong className="text-red-400">{allPredictions.filter(r => r.nilaiPrediksi < 50).length}</strong></span>
+              </div>
+            </div>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={allPredictions.map(r => ({
+                  ...r,
+                  label: r.kode,
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                  <XAxis dataKey="label" tick={{ fill: "var(--text-muted)", fontSize: 10 }} interval={0} angle={-30} textAnchor="end" height={50} />
+                  <YAxis domain={[0, 100]} tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(value: unknown) => [`${Number(value).toFixed(2)}%`, "Prediksi"] as [string, string]}
+                  />
+                  <Bar dataKey="nilaiPrediksi" radius={[4, 4, 0, 0]} maxBarSize={24}>
+                    {allPredictions.map((r, i) => (
+                      <Cell key={i} fill={r.nilaiPrediksi >= 80 ? "#10b981" : r.nilaiPrediksi >= 50 ? "#eab308" : "#ef4444"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+        )}
+
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
