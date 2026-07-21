@@ -37,3 +37,4 @@ temp_*.txt
 temp_*.csv
 *.err
 tsconfig.tsbuildinfo
+.vercel

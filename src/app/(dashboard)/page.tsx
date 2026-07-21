@@ -321,7 +321,7 @@ export default function DashboardPage() {
                 />
                 <Tooltip
                   contentStyle={tooltipStyle}
-                  formatter={(value: unknown, name: string) => {
+                  formatter={(value: unknown, name) => {
                     const label = name === "sangatBaik" ? "Sangat Baik" : name === "sedang" ? "Sedang" : "Rendah"
                     return [`${value} puskesmas`, label] as [string, string]
                   }}
