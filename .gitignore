@@ -32,3 +32,5 @@ temp_*.csv
 *.err
 tsconfig.tsbuildinfo
 .vercel
+render-cli/
+koyeb-cli/
