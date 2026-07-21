@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "vercel-build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "ml-engine": "cd ml-engine && venv\\Scripts\\python main.py",
