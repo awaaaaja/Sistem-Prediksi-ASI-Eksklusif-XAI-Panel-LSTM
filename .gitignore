@@ -20,16 +20,10 @@ _db_stats.js
 seed_error.txt
 seed_output.txt
 
-# Duplicate model files at root (already in ml-engine/models/)
-model_lstm_panel.h5
-scaler_X.pkl
-scaler_Y.pkl
-
-# ML model binaries — too large for git
-ml-engine/models/background_data.npy
-ml-engine/models/model_lstm_panel.keras
-ml-engine/models/scaler_X.pkl
-ml-engine/models/scaler_Y.pkl
+# Root-level model duplicates (actual files in ml-engine/models/)
+/lstm_panel.h5
+/scaler_X.pkl
+/scaler_Y.pkl
 
 # Debug/artifacts
 temp_debug.py
