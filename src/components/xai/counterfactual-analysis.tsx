@@ -225,7 +225,7 @@ export function CounterfactualAnalysis({ prediction, shapData, currentHistory }:
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 <div>
                   <p className="text-xs text-theme-secondary">Nilai Saat Ini</p>
                   <p className="text-lg font-bold text-theme">

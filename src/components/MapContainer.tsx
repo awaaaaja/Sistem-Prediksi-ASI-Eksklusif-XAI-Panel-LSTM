@@ -182,7 +182,7 @@ export default function MapWrapper() {
 
   if (loading && !data) {
     return (
-      <div className="flex h-[600px] items-center justify-center rounded-xl border border-theme bg-theme-secondary/50">
+      <div className="flex h-[50vh] items-center justify-center rounded-xl border border-theme bg-theme-secondary/50 lg:h-[600px]">
         <div className="animate-pulse text-theme-secondary">Memuat peta...</div>
       </div>
     )
@@ -190,7 +190,7 @@ export default function MapWrapper() {
 
   if (error && !data) {
     return (
-      <div className="flex h-[600px] items-center justify-center rounded-xl border border-theme bg-theme-secondary/50">
+      <div className="flex h-[50vh] items-center justify-center rounded-xl border border-theme bg-theme-secondary/50 lg:h-[600px]">
         <div className="text-red-400">Gagal memuat data: {error}</div>
       </div>
     )
@@ -234,8 +234,8 @@ export default function MapWrapper() {
         />
       </div>
 
-      <div className="flex gap-4">
-        <div className="relative h-[600px] flex-1 overflow-hidden rounded-xl border border-theme">
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <div className="relative h-[50vh] flex-1 overflow-hidden rounded-xl border border-theme lg:h-[600px]">
           <MapLegend activeSegmen={activeSegmen} onHover={setActiveSegmen} />
 
           <LeafletMap
@@ -248,9 +248,9 @@ export default function MapWrapper() {
           </LeafletMap>
         </div>
 
-        <div className="w-72 shrink-0 overflow-y-auto rounded-xl border border-theme bg-theme-secondary/30 p-4 max-h-[600px]">
+        <div className="w-full overflow-y-auto rounded-xl border border-theme bg-theme-secondary/30 p-4 lg:w-72 lg:shrink-0 lg:max-h-[600px]">
           <h3 className="mb-3 text-sm font-semibold text-theme">Data per Kecamatan</h3>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
             {sortedKecamatan.map((k: any) => (
               <button
                 key={k.nama}

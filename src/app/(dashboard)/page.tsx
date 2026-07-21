@@ -96,6 +96,7 @@ export default function DashboardPage() {
   const [kecamatanFilter, setKecamatanFilter] = useState<string | null>(null)
   const [tahunFilter, setTahunFilter] = useState<string>("")
   const [predictingAll, setPredictingAll] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const [allPredictions, setAllPredictions] = useState<{ kode: string; nama: string; nilaiPrediksi: number; error?: string }[] | null>(null)
   const { toast } = useToast()
 
@@ -287,7 +288,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <GlowCard delay={0.1}>
           <h2 className="mb-4 text-lg font-semibold text-theme">Tren Cakupan ASI Eksklusif (48 Bulan)</h2>
-          <div className="h-72">
+          <div className="h-48 lg:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data?.trend || []}>
                 <defs>
@@ -327,7 +328,7 @@ export default function DashboardPage() {
 
         <GlowCard delay={0.15}>
           <h2 className="mb-4 text-lg font-semibold text-theme">Distribusi Segmen per Tahun</h2>
-          <div className="h-72">
+          <div className="h-48 lg:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={lineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
@@ -402,41 +403,50 @@ export default function DashboardPage() {
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <MagnifyingGlass size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="text"
-                placeholder="Cari puskesmas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-48 rounded-lg border border-theme bg-theme-secondary py-1.5 pl-9 pr-3 text-sm text-theme outline-none placeholder:text-muted focus:ring-1 focus:ring-emerald-500"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-theme">
-                  <X size={14} />
-                </button>
-              )}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-1 rounded-lg border border-theme bg-theme-secondary px-3 py-2 text-xs text-theme-secondary transition-colors hover:bg-hover-theme sm:hidden"
+            >
+              <Funnel size={14} />
+              Filter
+            </button>
+            <div className={`flex flex-wrap items-center gap-2 ${showFilters ? "flex" : "hidden sm:flex"}`}>
+              <div className="relative">
+                <MagnifyingGlass size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                <input
+                  type="text"
+                  placeholder="Cari puskesmas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-theme bg-theme-secondary py-2.5 pl-9 pr-3 text-sm text-theme outline-none placeholder:text-muted focus:ring-1 focus:ring-emerald-500 sm:w-48 sm:py-1.5"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-theme">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <select
+                value={kecamatanFilter || ""}
+                onChange={(e) => setKecamatanFilter(e.target.value || null)}
+                className="w-full rounded-lg border border-theme bg-theme-secondary px-3 py-2.5 text-sm text-theme outline-none focus:ring-1 focus:ring-emerald-500 sm:w-auto sm:py-1.5"
+              >
+                <option value="">Semua Kecamatan</option>
+                {KECAMATAN_LIST.map((k) => (
+                  <option key={k.id} value={k.nama}>{k.nama}</option>
+                ))}
+              </select>
+              <select
+                value={tahunFilter}
+                onChange={(e) => setTahunFilter(e.target.value)}
+                className="w-full rounded-lg border border-theme bg-theme-secondary px-3 py-2.5 text-sm text-theme outline-none focus:ring-1 focus:ring-emerald-500 sm:w-auto sm:py-1.5"
+              >
+                <option value="">Semua Tahun</option>
+                {TAHUN_LIST.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
-            <select
-              value={kecamatanFilter || ""}
-              onChange={(e) => setKecamatanFilter(e.target.value || null)}
-              className="rounded-lg border border-theme bg-theme-secondary px-3 py-1.5 text-sm text-theme outline-none focus:ring-1 focus:ring-emerald-500"
-            >
-              <option value="">Semua Kecamatan</option>
-              {KECAMATAN_LIST.map((k) => (
-                <option key={k.id} value={k.nama}>{k.nama}</option>
-              ))}
-            </select>
-            <select
-              value={tahunFilter}
-              onChange={(e) => setTahunFilter(e.target.value)}
-              className="rounded-lg border border-theme bg-theme-secondary px-3 py-1.5 text-sm text-theme outline-none focus:ring-1 focus:ring-emerald-500"
-            >
-              <option value="">Semua Tahun</option>
-              {TAHUN_LIST.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
           </div>
         </div>
         <div className="mb-4 flex flex-wrap gap-2">
@@ -481,7 +491,7 @@ export default function DashboardPage() {
                 <span>Rendah: <strong className="text-red-400">{allPredictions.filter(r => r.nilaiPrediksi < 50).length}</strong></span>
               </div>
             </div>
-            <div className="h-56">
+            <div className="h-48 lg:h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={allPredictions.map(r => ({
                   ...r,
@@ -512,102 +522,188 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-theme text-left text-theme-secondary">
-                  <th className="pb-3 font-medium">Kode</th>
-                  <th className="pb-3 font-medium">Puskesmas</th>
-                  <th className="pb-3 font-medium">Kecamatan</th>
-                  <th className="pb-3 font-medium">Segmen</th>
-                  <th className="pb-3 font-medium">Rata-rata Cakupan</th>
-                  <th className="pb-3 font-medium">Total Bayi</th>
-                  <th className="pb-3 font-medium">Total ASI</th>
-                  <th className="pb-3 font-medium">Bulan Data</th>
-                  <th className="pb-3 font-medium">Prediksi</th>
-                  <th className="pb-3 font-medium">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPuskesmasStats.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="py-8 text-center text-sm text-muted">
-                      Tidak ada puskesmas yang cocok dengan filter
-                    </td>
-                  </tr>
-                ) : (
-                  filteredPuskesmasStats.map((p, i) => {
-                    const pred = data?.prediksiPerPkm.find((x) => x.kode === p.kode)
-                    const pkmInfo = PUSKESMAS_LIST.find((x) => x.kode === p.kode)
-                    const seg = getSegmen(p.rataCakupan)
-                    const segmenLabel = seg === "SANGAT_BAIK" ? "Sangat Baik" : seg === "SEDANG" ? "Sedang" : "Rendah"
-                    const segmenColor = seg === "SANGAT_BAIK" ? "text-emerald-400" : seg === "SEDANG" ? "text-yellow-400" : "text-red-400"
-                    const segmenBg = seg === "SANGAT_BAIK" ? "bg-emerald-500/10" : seg === "SEDANG" ? "bg-yellow-500/10" : "bg-red-500/10"
-                    return (
-                      <motion.tr
-                        key={p.kode}
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: i * 0.02, duration: 0.3 }}
-                        className="border-b border-theme text-theme last:border-0 hover:shadow-[0_0_12px_rgba(16,185,129,0.05)] bg-hover-theme transition-colors"
-                      >
-                        <td className="py-3 font-medium">{p.kode}</td>
-                        <td className="py-3 text-theme-secondary">{pkmInfo?.nama || "-"}</td>
-                        <td className="py-3 text-muted">{pkmInfo?.kecamatan || "-"}</td>
-                        <td className="py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${segmenBg} ${segmenColor}`}>
-                            {segmenLabel}
-                          </span>
-                        </td>
-                        <td className="py-3">
+          <>
+            {/* Mobile card layout */}
+            <div className="grid grid-cols-1 gap-3 lg:hidden">
+              {filteredPuskesmasStats.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted">
+                  Tidak ada puskesmas yang cocok dengan filter
+                </div>
+              ) : (
+                filteredPuskesmasStats.map((p, i) => {
+                  const pred = data?.prediksiPerPkm.find((x) => x.kode === p.kode)
+                  const pkmInfo = PUSKESMAS_LIST.find((x) => x.kode === p.kode)
+                  const seg = getSegmen(p.rataCakupan)
+                  const segmenLabel = seg === "SANGAT_BAIK" ? "Sangat Baik" : seg === "SEDANG" ? "Sedang" : "Rendah"
+                  const segmenColor = seg === "SANGAT_BAIK" ? "text-emerald-400" : seg === "SEDANG" ? "text-yellow-400" : "text-red-400"
+                  const segmenBg = seg === "SANGAT_BAIK" ? "bg-emerald-500/10" : seg === "SEDANG" ? "bg-yellow-500/10" : "bg-red-500/10"
+                  return (
+                    <motion.div
+                      key={p.kode}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.02 }}
+                      className="rounded-xl border border-theme bg-theme-secondary/50 p-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
                           <div className="flex items-center gap-2">
-                            <div className="h-1.5 w-20 overflow-hidden rounded-full" style={{ backgroundColor: "var(--skeleton-base)" }}>
-                              <div
-                                className={`h-full rounded-full ${
-                                  seg === "SANGAT_BAIK" ? "bg-emerald-500" : seg === "SEDANG" ? "bg-yellow-500" : "bg-red-500"
-                                }`}
-                                style={{ width: `${Math.min(p.rataCakupan, 100)}%` }}
-                              />
-                            </div>
-                            <span className={segmenColor}>{p.rataCakupan}%</span>
+                            <span className="text-xs font-medium text-muted">{p.kode}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${segmenBg} ${segmenColor}`}>
+                              {segmenLabel}
+                            </span>
                           </div>
-                        </td>
-                        <td className="py-3 text-theme-secondary">{p.totalBayi.toLocaleString()}</td>
-                        <td className="py-3 text-theme-secondary">{p.totalASI.toLocaleString()}</td>
-                        <td className="py-3 text-muted">{p.totalBulan}</td>
-                        <td className="py-3">
+                          <p className="mt-1 text-sm font-medium text-theme">{pkmInfo?.nama || "-"}</p>
+                          <p className="text-xs text-muted">{pkmInfo?.kecamatan || "-"}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-theme">{p.rataCakupan}%</p>
+                          <p className="text-xs text-muted">rata-rata</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full" style={{ backgroundColor: "var(--skeleton-base)" }}>
+                        <div
+                          className={`h-full rounded-full ${
+                            seg === "SANGAT_BAIK" ? "bg-emerald-500" : seg === "SEDANG" ? "bg-yellow-500" : "bg-red-500"
+                          }`}
+                          style={{ width: `${Math.min(p.rataCakupan, 100)}%` }}
+                        />
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-theme-secondary">
+                        <span>Bayi: <strong>{p.totalBayi.toLocaleString()}</strong></span>
+                        <span>ASI: <strong>{p.totalASI.toLocaleString()}</strong></span>
+                        <span>Data: <strong>{p.totalBulan} bln</strong></span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between border-t border-theme pt-2">
+                        <div>
                           {pred ? (
-                            <span className="text-cyan-400">{pred.nilaiPrediksi.toFixed(2)}%</span>
+                            <span className="text-xs">Prediksi: <strong className="text-cyan-400">{pred.nilaiPrediksi.toFixed(2)}%</strong></span>
                           ) : (
-                            <span className="text-muted">-</span>
+                            <span className="text-xs text-muted">Belum ada prediksi</span>
                           )}
-                        </td>
-                        <td className="py-3">
-                          <a
-                            href={`/puskesmas/${p.kode === "PKM01" ? 1 : p.kode === "PKM02" ? 2 : "#"}`}
-                            onClick={async (e) => {
-                              e.preventDefault()
-                              try {
-                                const res = await fetch(`/api/puskesmas/by-kode/${p.kode}`)
-                                const pkm = await res.json()
-                                if (pkm?.id) window.location.href = `/puskesmas/${pkm.id}`
-                              } catch {
-                                toast("error", "Gagal memuat detail puskesmas")
-                              }
-                            }}
-                            className="rounded-md bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-400 transition-colors hover:bg-emerald-500/20"
-                          >
-                            Detail
-                          </a>
-                        </td>
-                      </motion.tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </div>
+                        <a
+                          href={`/puskesmas/${p.kode === "PKM01" ? 1 : p.kode === "PKM02" ? 2 : "#"}`}
+                          onClick={async (e) => {
+                            e.preventDefault()
+                            try {
+                              const res = await fetch(`/api/puskesmas/by-kode/${p.kode}`)
+                              const pkm = await res.json()
+                              if (pkm?.id) window.location.href = `/puskesmas/${pkm.id}`
+                            } catch {
+                              toast("error", "Gagal memuat detail puskesmas")
+                            }
+                          }}
+                          className="rounded-md bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-400 transition-colors hover:bg-emerald-500/20"
+                        >
+                          Detail
+                        </a>
+                      </div>
+                    </motion.div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-theme text-left text-theme-secondary">
+                    <th className="pb-3 font-medium">Kode</th>
+                    <th className="pb-3 font-medium">Puskesmas</th>
+                    <th className="pb-3 font-medium">Kecamatan</th>
+                    <th className="pb-3 font-medium">Segmen</th>
+                    <th className="pb-3 font-medium">Rata-rata Cakupan</th>
+                    <th className="pb-3 font-medium">Total Bayi</th>
+                    <th className="pb-3 font-medium">Total ASI</th>
+                    <th className="pb-3 font-medium">Bulan Data</th>
+                    <th className="pb-3 font-medium">Prediksi</th>
+                    <th className="pb-3 font-medium">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPuskesmasStats.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="py-8 text-center text-sm text-muted">
+                        Tidak ada puskesmas yang cocok dengan filter
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPuskesmasStats.map((p, i) => {
+                      const pred = data?.prediksiPerPkm.find((x) => x.kode === p.kode)
+                      const pkmInfo = PUSKESMAS_LIST.find((x) => x.kode === p.kode)
+                      const seg = getSegmen(p.rataCakupan)
+                      const segmenLabel = seg === "SANGAT_BAIK" ? "Sangat Baik" : seg === "SEDANG" ? "Sedang" : "Rendah"
+                      const segmenColor = seg === "SANGAT_BAIK" ? "text-emerald-400" : seg === "SEDANG" ? "text-yellow-400" : "text-red-400"
+                      const segmenBg = seg === "SANGAT_BAIK" ? "bg-emerald-500/10" : seg === "SEDANG" ? "bg-yellow-500/10" : "bg-red-500/10"
+                      return (
+                        <motion.tr
+                          key={p.kode}
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: i * 0.02, duration: 0.3 }}
+                          className="border-b border-theme text-theme last:border-0 hover:shadow-[0_0_12px_rgba(16,185,129,0.05)] bg-hover-theme transition-colors"
+                        >
+                          <td className="py-3 font-medium">{p.kode}</td>
+                          <td className="py-3 text-theme-secondary">{pkmInfo?.nama || "-"}</td>
+                          <td className="py-3 text-muted">{pkmInfo?.kecamatan || "-"}</td>
+                          <td className="py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${segmenBg} ${segmenColor}`}>
+                              {segmenLabel}
+                            </span>
+                          </td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="h-1.5 w-20 overflow-hidden rounded-full" style={{ backgroundColor: "var(--skeleton-base)" }}>
+                                <div
+                                  className={`h-full rounded-full ${
+                                    seg === "SANGAT_BAIK" ? "bg-emerald-500" : seg === "SEDANG" ? "bg-yellow-500" : "bg-red-500"
+                                  }`}
+                                  style={{ width: `${Math.min(p.rataCakupan, 100)}%` }}
+                                />
+                              </div>
+                              <span className={segmenColor}>{p.rataCakupan}%</span>
+                            </div>
+                          </td>
+                          <td className="py-3 text-theme-secondary">{p.totalBayi.toLocaleString()}</td>
+                          <td className="py-3 text-theme-secondary">{p.totalASI.toLocaleString()}</td>
+                          <td className="py-3 text-muted">{p.totalBulan}</td>
+                          <td className="py-3">
+                            {pred ? (
+                              <span className="text-cyan-400">{pred.nilaiPrediksi.toFixed(2)}%</span>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td className="py-3">
+                            <a
+                              href={`/puskesmas/${p.kode === "PKM01" ? 1 : p.kode === "PKM02" ? 2 : "#"}`}
+                              onClick={async (e) => {
+                                e.preventDefault()
+                                try {
+                                  const res = await fetch(`/api/puskesmas/by-kode/${p.kode}`)
+                                  const pkm = await res.json()
+                                  if (pkm?.id) window.location.href = `/puskesmas/${pkm.id}`
+                                } catch {
+                                  toast("error", "Gagal memuat detail puskesmas")
+                                }
+                              }}
+                              className="rounded-md bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-400 transition-colors hover:bg-emerald-500/20"
+                            >
+                              Detail
+                            </a>
+                          </td>
+                        </motion.tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </GlowCard>
 

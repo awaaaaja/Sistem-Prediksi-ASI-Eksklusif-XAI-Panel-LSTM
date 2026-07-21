@@ -179,7 +179,7 @@ export default function DetailPage({ params }: { params: { id: string } }) {
           <span className="flex items-center gap-1"><Baby size={14} className="text-emerald-400" /> Bayi 6 Bulan</span>
           <span className="flex items-center gap-1"><DropHalf size={14} className="text-cyan-400" /> ASI Eksklusif</span>
         </div>
-        <div className="mt-3 h-64">
+        <div className="mt-3 h-48 lg:h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
@@ -274,34 +274,50 @@ export default function DetailPage({ params }: { params: { id: string } }) {
           Riwayat Prediksi
         </h2>
         {prediksiList.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-theme text-left text-theme-secondary">
-                  <th className="pb-3 font-medium">#</th>
-                  <th className="pb-3 font-medium">Prediksi</th>
-                  <th className="pb-3 font-medium">Waktu</th>
-                  <th className="pb-3 font-medium">Durasi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {prediksiList.map((pr, i) => (
-                  <tr key={pr.id} className="border-b border-theme text-theme last:border-0 bg-hover-theme transition-colors">
-                    <td className="py-3 text-muted">{prediksiList.length - i}</td>
-                    <td className="py-3">
-                      <span className="text-cyan-400">{pr.nilaiPrediksi.toFixed(2)}%</span>
-                    </td>
-                    <td className="py-3 text-theme-secondary">
-                      {new Date(pr.createdAt).toLocaleString("id-ID")}
-                    </td>
-                    <td className="py-3 text-muted">
-                      {pr.executionTimeMs.toFixed(0)} ms
-                    </td>
+          <>
+            {/* Mobile cards */}
+            <div className="grid grid-cols-1 gap-3 sm:hidden">
+              {prediksiList.map((pr, i) => (
+                <div key={pr.id} className="rounded-xl border border-theme bg-theme-secondary/50 p-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted">#{prediksiList.length - i}</span>
+                    <span className="text-xs text-muted">{pr.executionTimeMs.toFixed(0)} ms</span>
+                  </div>
+                  <p className="mt-1 text-lg font-bold text-cyan-400">{pr.nilaiPrediksi.toFixed(2)}%</p>
+                  <p className="text-xs text-theme-secondary">{new Date(pr.createdAt).toLocaleString("id-ID")}</p>
+                </div>
+              ))}
+            </div>
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto sm:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-theme text-left text-theme-secondary">
+                    <th className="pb-3 font-medium">#</th>
+                    <th className="pb-3 font-medium">Prediksi</th>
+                    <th className="pb-3 font-medium">Waktu</th>
+                    <th className="pb-3 font-medium">Durasi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {prediksiList.map((pr, i) => (
+                    <tr key={pr.id} className="border-b border-theme text-theme last:border-0 bg-hover-theme transition-colors">
+                      <td className="py-3 text-muted">{prediksiList.length - i}</td>
+                      <td className="py-3">
+                        <span className="text-cyan-400">{pr.nilaiPrediksi.toFixed(2)}%</span>
+                      </td>
+                      <td className="py-3 text-theme-secondary">
+                        {new Date(pr.createdAt).toLocaleString("id-ID")}
+                      </td>
+                      <td className="py-3 text-muted">
+                        {pr.executionTimeMs.toFixed(0)} ms
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 10 }}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/ui/theme-provider"
 import "./globals.css"
@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   title: "Sistem Prediksi ASI Eksklusif + XAI Panel LSTM",
   description:
     "Prediksi cakupan ASI Eksklusif 24 Puskesmas dengan LSTM Panel + XAI SHAP",
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0a0f1e",
 }
 
 export default function RootLayout({
