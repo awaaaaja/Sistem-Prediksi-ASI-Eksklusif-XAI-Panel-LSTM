@@ -75,6 +75,27 @@ export interface ShapResponse {
   features: ShapFeatureImpact[]
 }
 
+export interface CounterfactualAnalysis {
+  prediction: number
+  targetValue: number
+  gap: number
+  isTargetMet: boolean
+  topNegativeFeatures: {
+    feature: string
+    currentValue: number
+    totalShapContribution: number
+    estimatedRequiredChange: number
+    recommendedValue: number
+  }[]
+  primaryIntervention: {
+    feature: string
+    currentValue: number
+    currentLabel: string
+    targetValue: number
+    targetLabel: string
+  } | null
+}
+
 export interface UploadRow {
   Kode_Puskesmas: string
   Tanggal: string

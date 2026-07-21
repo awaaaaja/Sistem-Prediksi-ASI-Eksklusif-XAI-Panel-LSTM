@@ -44,7 +44,7 @@ export const SEGMEN_THRESHOLDS = {
   SEDANG: 50,
 } as const
 
-export const TAHUN_LIST = [2021, 2022, 2023, 2024, 2025, 2026] as const
+export const TAHUN_LIST = [2021, 2022, 2023, 2024, 2025] as const
 
 export const KECAMATAN_LIST = [
   { id: 1, nama: "Koto Tangah" },

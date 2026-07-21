@@ -1,13 +1,17 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const tahun = req.nextUrl.searchParams.get("tahun")
+  const yearFilter = tahun ? { gte: new Date(`${tahun}-01-01`), lte: new Date(`${tahun}-12-31`) } : undefined
+
   const [puskesmasCount, dataCount, prediksiCount, uploadLogs, allData, recentPrediksi, allPrediksi] = await Promise.all([
     prisma.puskesmas.count({ where: { aktif: true } }),
-    prisma.dataBulanan.count(),
+    prisma.dataBulanan.count({ where: tahun ? { tanggal: yearFilter } : undefined }),
     prisma.prediksi.count(),
     prisma.uploadLog.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.dataBulanan.findMany({
+      where: tahun ? { tanggal: yearFilter } : undefined,
       orderBy: { tanggal: "asc" },
       include: { puskesmas: { select: { kode: true, nama: true } } },
     }),
@@ -25,6 +29,29 @@ export async function GET() {
 
   const monthlyTrend: Record<string, { total: number; count: number }> = {}
   const puskesmasMap: Record<string, { total: number; count: number; totalBayi: number; totalASI: number }> = {}
+
+  // per-year segmen distribution
+  const yearPuskesmas: Record<number, Record<string, number[]>> = {}
+  for (const d of allData) {
+    const year = d.tanggal.getFullYear()
+    if (!yearPuskesmas[year]) yearPuskesmas[year] = {}
+    if (!yearPuskesmas[year][d.puskesmas.kode]) yearPuskesmas[year][d.puskesmas.kode] = []
+    const pct = d.jumlahBayi6Bulan > 0 ? (d.jumlahASIEksklusif / d.jumlahBayi6Bulan) * 100 : 0
+    yearPuskesmas[year][d.puskesmas.kode].push(pct)
+  }
+  const segmenTrend = Object.entries(yearPuskesmas)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([year, pkmMap]) => {
+      let sangatBaik = 0, sedang = 0, rendah = 0
+      for (const pctArr of Object.values(pkmMap)) {
+        const avg = pctArr.reduce((s, v) => s + v, 0) / pctArr.length
+        if (avg >= 80) sangatBaik++
+        else if (avg >= 50) sedang++
+        else rendah++
+      }
+      return { tahun: Number(year), sangatBaik, sedang, rendah }
+    })
+
   for (const d of allData) {
     const key = d.tanggal.toISOString().slice(0, 7)
     if (!monthlyTrend[key]) monthlyTrend[key] = { total: 0, count: 0 }
@@ -79,6 +106,7 @@ export async function GET() {
   }))
 
   return NextResponse.json({
+    segmenTrend,
     stats: {
       totalPuskesmas: puskesmasCount,
       totalDataBulanan: dataCount,
@@ -95,6 +123,13 @@ export async function GET() {
     trend,
     puskesmasStats,
     prediksiPerPkm,
+    riwayatPrediksi: recentPrediksi.map((p) => ({
+      id: p.id,
+      kode: p.puskesmas.kode,
+      nama: p.puskesmas.nama,
+      nilaiPrediksi: p.nilaiPrediksi,
+      createdAt: p.createdAt.toISOString(),
+    })),
     uploadLogs: uploadLogs.map((l) => ({
       id: l.id,
       namaFile: l.namaFile,

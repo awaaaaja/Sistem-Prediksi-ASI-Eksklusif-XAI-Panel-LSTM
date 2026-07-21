@@ -1,9 +1,9 @@
 import type { Segmen } from "@/types"
 
 const SEGMEN_COLORS: Record<Segmen, string> = {
-  SANGAT_BAIK: "#10b981",
-  SEDANG: "#f59e0b",
-  RENDAH: "#ef4444",
+  SANGAT_BAIK: "#3cb44b",
+  SEDANG: "#ffe119",
+  RENDAH: "#e6194b",
 }
 
 const SEGMEN_LABELS: Record<Segmen, string> = {

@@ -33,4 +33,7 @@ ml-engine/models/scaler_Y.pkl
 
 # Debug/artifacts
 temp_debug.py
+temp_*.txt
+temp_*.csv
+*.err
 tsconfig.tsbuildinfo

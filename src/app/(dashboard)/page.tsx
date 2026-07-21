@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Building, TrendUp, FileArrowDown, Database,
-  CaretUp, CaretDown, Clock, UploadSimple,
+  CaretUp, CaretDown, Clock, UploadSimple, Lightning,
+  MagnifyingGlass, Funnel, X,
 } from "@phosphor-icons/react/dist/ssr"
 import { GlowCard } from "@/components/glow-card"
 import { AnimatedNumber } from "@/components/animated-number"
@@ -15,6 +16,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, Area, AreaChart,
 } from "recharts"
+import { PUSKESMAS_LIST, KECAMATAN_LIST, TAHUN_LIST } from "@/lib/constants"
 
 interface TrendPoint {
   bulan: string
@@ -37,6 +39,14 @@ interface PrediksiItem {
   tanggalPrediksi: string
 }
 
+interface RiwayatPrediksiItem {
+  id: number
+  kode: string
+  nama: string
+  nilaiPrediksi: number
+  createdAt: string
+}
+
 interface UploadLogItem {
   id: number
   namaFile: string
@@ -46,7 +56,15 @@ interface UploadLogItem {
   createdAt: string
 }
 
+interface SegmenTrend {
+  tahun: number
+  sangatBaik: number
+  sedang: number
+  rendah: number
+}
+
 interface DashboardData {
+  segmenTrend: SegmenTrend[]
   stats: {
     totalPuskesmas: number
     totalDataBulanan: number
@@ -58,6 +76,7 @@ interface DashboardData {
   trend: TrendPoint[]
   puskesmasStats: PuskesmasStat[]
   prediksiPerPkm: PrediksiItem[]
+  riwayatPrediksi: RiwayatPrediksiItem[]
   uploadLogs: UploadLogItem[]
 }
 
@@ -72,12 +91,45 @@ const tooltipStyle = {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [segmentFilter, setSegmentFilter] = useState<string | null>(null)
+  const [kecamatanFilter, setKecamatanFilter] = useState<string | null>(null)
+  const [tahunFilter, setTahunFilter] = useState<string>("")
   const { toast } = useToast()
+
+  const SEGMEN_THRESHOLDS = { SANGAT_BAIK: 80, SEDANG: 50 }
+
+  function getSegmen(rataCakupan: number): string {
+    if (rataCakupan >= SEGMEN_THRESHOLDS.SANGAT_BAIK) return "SANGAT_BAIK"
+    if (rataCakupan >= SEGMEN_THRESHOLDS.SEDANG) return "SEDANG"
+    return "RENDAH"
+  }
+
+  const filteredPuskesmasStats = data?.puskesmasStats
+    .filter((p) => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        const match = PUSKESMAS_LIST.find((x) => x.kode === p.kode)
+        if (!match) return true
+        if (!match.nama.toLowerCase().includes(q) && !match.kode.toLowerCase().includes(q)) return false
+      }
+      if (segmentFilter) {
+        const seg = getSegmen(p.rataCakupan)
+        if (seg !== segmentFilter) return false
+      }
+      if (kecamatanFilter) {
+        const match = PUSKESMAS_LIST.find((x) => x.kode === p.kode)
+        if (!match || match.kecamatan !== kecamatanFilter) return false
+      }
+      return true
+    }) || []
 
   useEffect(() => {
     async function load() {
+      setLoading(true)
       try {
-        const res = await fetch("/api/dashboard")
+        const url = tahunFilter ? `/api/dashboard?tahun=${tahunFilter}` : "/api/dashboard"
+        const res = await fetch(url)
         if (!res.ok) throw new Error("Gagal memuat data")
         const d: DashboardData = await res.json()
         setData(d)
@@ -87,7 +139,7 @@ export default function DashboardPage() {
       setLoading(false)
     }
     load()
-  }, [toast])
+  }, [toast, tahunFilter])
 
   const stats = data ? [
     {
@@ -146,13 +198,7 @@ export default function DashboardPage() {
     },
   ] : []
 
-  const topPuskesmas = data?.puskesmasStats?.slice(0, 5) || []
-  const bottomPuskesmas = data?.puskesmasStats?.slice(-5).reverse() || []
-
-  const prediksiChartData = data?.prediksiPerPkm?.map((p) => ({
-    kode: p.kode,
-    prediksi: +p.nilaiPrediksi.toFixed(2),
-  })) || []
+  const lineData = data?.segmenTrend || []
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -258,103 +304,132 @@ export default function DashboardPage() {
         </GlowCard>
 
         <GlowCard delay={0.15}>
-          <h2 className="mb-4 text-lg font-semibold text-theme">Prediksi per Puskesmas</h2>
+          <h2 className="mb-4 text-lg font-semibold text-theme">Distribusi Segmen per Tahun</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={prediksiChartData} layout="vertical">
+              <LineChart data={lineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                 <XAxis
-                  type="number"
-                  tick={{ fill: "var(--text-muted)", fontSize: 10 }}
-                  domain={[0, 100]}
-                  tickFormatter={(v) => `${v}%`}
+                  dataKey="tahun"
+                  tick={{ fill: "var(--text-muted)", fontSize: 11 }}
+                  interval={0}
                 />
                 <YAxis
-                  type="category"
-                  dataKey="kode"
-                  tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
-                  width={50}
+                  tick={{ fill: "var(--text-muted)", fontSize: 10 }}
+                  domain={[0, 24]}
+                  tickFormatter={(v) => `${v}`}
                 />
                 <Tooltip
                   contentStyle={tooltipStyle}
-                  formatter={(value: unknown) => [`${Number(value)}%`, "Prediksi"] as [string, string]}
+                  formatter={(value: unknown, name: string) => {
+                    const label = name === "sangatBaik" ? "Sangat Baik" : name === "sedang" ? "Sedang" : "Rendah"
+                    return [`${value} puskesmas`, label] as [string, string]
+                  }}
                 />
-                <Bar
-                  dataKey="prediksi"
-                  fill="#10b981"
-                  radius={[0, 4, 4, 0]}
-                  barSize={12}
+                <Legend
+                  formatter={(value: string) => {
+                    if (value === "sangatBaik") return "Sangat Baik"
+                    if (value === "sedang") return "Sedang"
+                    return "Rendah"
+                  }}
                 />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </GlowCard>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <GlowCard glow="emerald" delay={0.2}>
-          <h2 className="mb-4 text-lg font-semibold text-theme">
-            Top 5 Puskesmas &mdash; Rata-rata Cakapan Tertinggi
-          </h2>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topPuskesmas} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-                <XAxis
-                  type="number"
-                  tick={{ fill: "var(--text-muted)", fontSize: 10 }}
-                  domain={[0, 100]}
-                  tickFormatter={(v) => `${v}%`}
+                <Line
+                  type="monotone"
+                  dataKey="sangatBaik"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#10b981" }}
+                  name="sangatBaik"
                 />
-                <YAxis
-                  type="category"
-                  dataKey="kode"
-                  tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
-                  width={50}
+                <Line
+                  type="monotone"
+                  dataKey="sedang"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#f59e0b" }}
+                  name="sedang"
                 />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  formatter={(value: unknown) => [`${Number(value)}%`, "Rata-rata Cakupan"] as [string, string]}
+                <Line
+                  type="monotone"
+                  dataKey="rendah"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#ef4444" }}
+                  name="rendah"
                 />
-                <Bar dataKey="rataCakupan" fill="#10b981" radius={[0, 4, 4, 0]} barSize={14} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </GlowCard>
-
-        <GlowCard glow="cyan" delay={0.25}>
-          <h2 className="mb-4 text-lg font-semibold text-theme">
-            Bottom 5 Puskesmas &mdash; Rata-rata Cakapan Terendah
-          </h2>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={bottomPuskesmas} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-                <XAxis
-                  type="number"
-                  tick={{ fill: "var(--text-muted)", fontSize: 10 }}
-                  domain={[0, 100]}
-                  tickFormatter={(v) => `${v}%`}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="kode"
-                  tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
-                  width={50}
-                />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  formatter={(value: unknown) => [`${Number(value)}%`, "Rata-rata Cakupan"] as [string, string]}
-                />
-                <Bar dataKey="rataCakupan" fill="#06b6d4" radius={[0, 4, 4, 0]} barSize={14} />
-              </BarChart>
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </GlowCard>
       </div>
 
       <GlowCard delay={0.3}>
-        <h2 className="mb-4 text-lg font-semibold text-theme">Daftar Puskesmas</h2>
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold text-theme">Daftar Puskesmas</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <MagnifyingGlass size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                type="text"
+                placeholder="Cari puskesmas..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-48 rounded-lg border border-theme bg-theme-secondary py-1.5 pl-9 pr-3 text-sm text-theme outline-none placeholder:text-muted focus:ring-1 focus:ring-emerald-500"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-theme">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <select
+              value={kecamatanFilter || ""}
+              onChange={(e) => setKecamatanFilter(e.target.value || null)}
+              className="rounded-lg border border-theme bg-theme-secondary px-3 py-1.5 text-sm text-theme outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="">Semua Kecamatan</option>
+              {KECAMATAN_LIST.map((k) => (
+                <option key={k.id} value={k.nama}>{k.nama}</option>
+              ))}
+            </select>
+            <select
+              value={tahunFilter}
+              onChange={(e) => setTahunFilter(e.target.value)}
+              className="rounded-lg border border-theme bg-theme-secondary px-3 py-1.5 text-sm text-theme outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="">Semua Tahun</option>
+              {TAHUN_LIST.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[
+            { label: "Semua", value: null },
+            { label: "Sangat Baik", value: "SANGAT_BAIK" },
+            { label: "Sedang", value: "SEDANG" },
+            { label: "Rendah", value: "RENDAH" },
+          ].map((s) => (
+            <button
+              key={s.value || "all"}
+              onClick={() => setSegmentFilter(s.value)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                segmentFilter === s.value
+                  ? s.value === "SANGAT_BAIK"
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : s.value === "SEDANG"
+                    ? "bg-yellow-500/20 text-yellow-400"
+                    : s.value === "RENDAH"
+                    ? "bg-red-500/20 text-red-400"
+                    : "bg-emerald-500/20 text-emerald-400"
+                  : "bg-theme-secondary text-muted hover:text-theme"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -367,6 +442,9 @@ export default function DashboardPage() {
               <thead>
                 <tr className="border-b border-theme text-left text-theme-secondary">
                   <th className="pb-3 font-medium">Kode</th>
+                  <th className="pb-3 font-medium">Puskesmas</th>
+                  <th className="pb-3 font-medium">Kecamatan</th>
+                  <th className="pb-3 font-medium">Segmen</th>
                   <th className="pb-3 font-medium">Rata-rata Cakupan</th>
                   <th className="pb-3 font-medium">Total Bayi</th>
                   <th className="pb-3 font-medium">Total ASI</th>
@@ -376,60 +454,82 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {data?.puskesmasStats.map((p, i) => {
-                  const pred = data.prediksiPerPkm.find((x) => x.kode === p.kode)
-                  return (
-                    <motion.tr
-                      key={p.kode}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.02, duration: 0.3 }}
-                      className="border-b border-theme text-theme last:border-0 hover:shadow-[0_0_12px_rgba(16,185,129,0.05)] bg-hover-theme transition-colors"
-                    >
-                      <td className="py-3 font-medium">{p.kode}</td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-20 overflow-hidden rounded-full" style={{ backgroundColor: "var(--skeleton-base)" }}>
-                            <div
-                              className="h-full rounded-full bg-emerald-500"
-                              style={{ width: `${Math.min(p.rataCakupan, 100)}%` }}
-                            />
+                {filteredPuskesmasStats.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="py-8 text-center text-sm text-muted">
+                      Tidak ada puskesmas yang cocok dengan filter
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPuskesmasStats.map((p, i) => {
+                    const pred = data?.prediksiPerPkm.find((x) => x.kode === p.kode)
+                    const pkmInfo = PUSKESMAS_LIST.find((x) => x.kode === p.kode)
+                    const seg = getSegmen(p.rataCakupan)
+                    const segmenLabel = seg === "SANGAT_BAIK" ? "Sangat Baik" : seg === "SEDANG" ? "Sedang" : "Rendah"
+                    const segmenColor = seg === "SANGAT_BAIK" ? "text-emerald-400" : seg === "SEDANG" ? "text-yellow-400" : "text-red-400"
+                    const segmenBg = seg === "SANGAT_BAIK" ? "bg-emerald-500/10" : seg === "SEDANG" ? "bg-yellow-500/10" : "bg-red-500/10"
+                    return (
+                      <motion.tr
+                        key={p.kode}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.02, duration: 0.3 }}
+                        className="border-b border-theme text-theme last:border-0 hover:shadow-[0_0_12px_rgba(16,185,129,0.05)] bg-hover-theme transition-colors"
+                      >
+                        <td className="py-3 font-medium">{p.kode}</td>
+                        <td className="py-3 text-theme-secondary">{pkmInfo?.nama || "-"}</td>
+                        <td className="py-3 text-muted">{pkmInfo?.kecamatan || "-"}</td>
+                        <td className="py-3">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${segmenBg} ${segmenColor}`}>
+                            {segmenLabel}
+                          </span>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-20 overflow-hidden rounded-full" style={{ backgroundColor: "var(--skeleton-base)" }}>
+                              <div
+                                className={`h-full rounded-full ${
+                                  seg === "SANGAT_BAIK" ? "bg-emerald-500" : seg === "SEDANG" ? "bg-yellow-500" : "bg-red-500"
+                                }`}
+                                style={{ width: `${Math.min(p.rataCakupan, 100)}%` }}
+                              />
+                            </div>
+                            <span className={segmenColor}>{p.rataCakupan}%</span>
                           </div>
-                          <span className="text-emerald-400">{p.rataCakupan}%</span>
-                        </div>
-                      </td>
-                      <td className="py-3 text-theme-secondary">{p.totalBayi.toLocaleString()}</td>
-                      <td className="py-3 text-theme-secondary">{p.totalASI.toLocaleString()}</td>
-                      <td className="py-3 text-muted">{p.totalBulan}</td>
-                      <td className="py-3">
-                        {pred ? (
-                          <span className="text-cyan-400">{pred.nilaiPrediksi.toFixed(2)}%</span>
-                        ) : (
-                          <span className="text-muted">-</span>
-                        )}
-                      </td>
-                      <td className="py-3">
-                        <a
-                          href={`/puskesmas/${p.kode === "PKM01" ? 1 : p.kode === "PKM02" ? 2 : "#"}`}
-                          onClick={async (e) => {
-                            e.preventDefault()
-                            try {
-                              const res = await fetch(`/api/puskesmas/by-kode/${p.kode}`)
-                              const pkm = await res.json()
-                              if (pkm?.id) window.location.href = `/puskesmas/${pkm.id}`
-                            } catch {
-                              toast("error", "Gagal memuat detail puskesmas")
-                            }
-                          }}
-                          className="rounded-md bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-400 transition-colors hover:bg-emerald-500/20"
-                        >
-                          Detail
-                        </a>
-                      </td>
-                    </motion.tr>
-                  )
-                })}
+                        </td>
+                        <td className="py-3 text-theme-secondary">{p.totalBayi.toLocaleString()}</td>
+                        <td className="py-3 text-theme-secondary">{p.totalASI.toLocaleString()}</td>
+                        <td className="py-3 text-muted">{p.totalBulan}</td>
+                        <td className="py-3">
+                          {pred ? (
+                            <span className="text-cyan-400">{pred.nilaiPrediksi.toFixed(2)}%</span>
+                          ) : (
+                            <span className="text-muted">-</span>
+                          )}
+                        </td>
+                        <td className="py-3">
+                          <a
+                            href={`/puskesmas/${p.kode === "PKM01" ? 1 : p.kode === "PKM02" ? 2 : "#"}`}
+                            onClick={async (e) => {
+                              e.preventDefault()
+                              try {
+                                const res = await fetch(`/api/puskesmas/by-kode/${p.kode}`)
+                                const pkm = await res.json()
+                                if (pkm?.id) window.location.href = `/puskesmas/${pkm.id}`
+                              } catch {
+                                toast("error", "Gagal memuat detail puskesmas")
+                              }
+                            }}
+                            className="rounded-md bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-400 transition-colors hover:bg-emerald-500/20"
+                          >
+                            Detail
+                          </a>
+                        </td>
+                      </motion.tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -437,6 +537,59 @@ export default function DashboardPage() {
       </GlowCard>
 
       <GlowCard delay={0.35}>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-theme">
+          <FileArrowDown size={18} className="text-theme-secondary" />
+          Riwayat Prediksi
+        </h2>
+        {data?.riwayatPrediksi && data.riwayatPrediksi.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-theme text-left text-theme-secondary">
+                  <th className="pb-3 font-medium">Puskesmas</th>
+                  <th className="pb-3 font-medium">Prediksi</th>
+                  <th className="pb-3 font-medium">Waktu</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.riwayatPrediksi.map((p, i) => (
+                  <motion.tr
+                    key={p.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.02, duration: 0.3 }}
+                    className="border-b border-theme text-theme last:border-0 bg-hover-theme transition-colors"
+                  >
+                    <td className="py-3">
+                      <span className="text-muted">{p.kode}</span>{" "}
+                      <span className="text-theme-secondary">{p.nama}</span>
+                    </td>
+                    <td className="py-3">
+                      <span className="text-cyan-400">{p.nilaiPrediksi.toFixed(2)}%</span>
+                    </td>
+                    <td className="py-3 text-muted">
+                      {new Date(p.createdAt).toLocaleString("id-ID")}
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center gap-2 py-8 text-center"
+          >
+            <Lightning size={32} className="text-muted" />
+            <p className="text-sm text-muted">Belum ada riwayat prediksi</p>
+            <p className="text-xs text-muted">Lakukan prediksi dari halaman Puskesmas untuk memulai</p>
+          </motion.div>
+        )}
+      </GlowCard>
+
+      <GlowCard delay={0.4}>
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-theme">
           <Clock size={18} className="text-theme-secondary" />
           Aktivitas Upload Terakhir

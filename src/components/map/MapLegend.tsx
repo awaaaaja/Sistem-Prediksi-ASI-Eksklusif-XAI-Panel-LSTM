@@ -4,9 +4,9 @@ import { motion } from "framer-motion"
 import type { Segmen } from "@/types"
 
 const SEGMEN_ITEMS: { segmen: Segmen; label: string; color: string }[] = [
-  { segmen: "SANGAT_BAIK", label: "Sangat Baik (\u226580%)", color: "#10b981" },
-  { segmen: "SEDANG", label: "Sedang (50-79%)", color: "#f59e0b" },
-  { segmen: "RENDAH", label: "Rendah (<50%)", color: "#ef4444" },
+  { segmen: "SANGAT_BAIK", label: "Sangat Baik (\u226580%)", color: "#3cb44b" },
+  { segmen: "SEDANG", label: "Sedang (50-79%)", color: "#ffe119" },
+  { segmen: "RENDAH", label: "Rendah (<50%)", color: "#e6194b" },
 ]
 
 interface MapLegendProps {

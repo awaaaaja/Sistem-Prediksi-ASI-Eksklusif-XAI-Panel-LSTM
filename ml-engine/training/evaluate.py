@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from feature_engineering import engineer_features, create_sequences, WINDOW_SIZE, N_FEATURES, FEATURE_NAMES
 
 MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
-CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data_master_2021_2024_scaled.csv")
+CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data_master_2021_2025_opsi_b.csv")
 
 
 def evaluate_per_puskesmas():
@@ -31,7 +31,7 @@ def evaluate_per_puskesmas():
     logger.info("=" * 60)
 
     # Load model dan scalers
-    model_path = os.path.join(MODEL_DIR, "model_lstm_panel.h5")
+    model_path = os.path.join(MODEL_DIR, "model_lstm_panel.keras")
     scaler_X_path = os.path.join(MODEL_DIR, "scaler_X.pkl")
     scaler_y_path = os.path.join(MODEL_DIR, "scaler_Y.pkl")
 
@@ -48,7 +48,7 @@ def evaluate_per_puskesmas():
 
     # Load dan engineer features
     df = pd.read_csv(CSV_PATH)
-    df["Tanggal"] = pd.to_datetime(df["Tanggal"])
+    df["Tanggal"] = pd.to_datetime(df["Tanggal"], format="%Y-%m-%d")
     df_feat = engineer_features(df)
 
     results = []

@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react"
 import dynamic from "next/dynamic"
 import L from "leaflet"
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup, GeoJSON, useMap } from "react-leaflet"
+import { MapContainer as LeafletMap, TileLayer, GeoJSON, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css"
 import "leaflet-defaulticon-compatibility"
@@ -13,24 +13,20 @@ import { MapLegend } from "@/components/map/MapLegend"
 import { YearSelector } from "@/components/map/YearSelector"
 import { KecamatanPopup } from "@/components/map/KecamatanPopup"
 
-const SEGMEN_COLORS: Record<Segmen, string> = {
-  SANGAT_BAIK: "#10b981",
-  SEDANG: "#f59e0b",
-  RENDAH: "#ef4444",
-}
-
 const SEGMEN_RGB: Record<Segmen, string> = {
-  SANGAT_BAIK: "16,185,129",
-  SEDANG: "245,158,11",
-  RENDAH: "239,68,68",
+  SANGAT_BAIK: "60,180,75",
+  SEDANG: "255,225,25",
+  RENDAH: "230,25,75",
 }
 
-function getSegmenColor(segmen: Segmen, alpha = 0.35) {
+function getSegmenColor(segmen: Segmen, alpha = 0.8) {
   return `rgba(${SEGMEN_RGB[segmen]}, ${alpha})`
 }
 
 function getSegmenColorSolid(segmen: Segmen) {
-  return SEGMEN_COLORS[segmen]
+  if (segmen === "SANGAT_BAIK") return "#3cb44b"
+  if (segmen === "SEDANG") return "#ffe119"
+  return "#e6194b"
 }
 
 function getSegmen(nilai: number | null): Segmen {
@@ -40,31 +36,19 @@ function getSegmen(nilai: number | null): Segmen {
   return "RENDAH"
 }
 
+function formatSegmen(s: Segmen) {
+  if (s === "SANGAT_BAIK") return "Sangat Baik"
+  if (s === "SEDANG") return "Sedang"
+  return "Rendah"
+}
+
 function MapContent({ data, tahun }: { data: MapDataResponse; tahun: number }) {
   const map = useMap()
 
   useEffect(() => {
-    if (data.puskesmas.features.length > 0) {
-      const coords = data.puskesmas.features.map((f: any) => f.geometry.coordinates as number[])
-      const valid = coords.filter((c: number[]) => c[0] !== 0 && c[1] !== 0)
-      if (valid.length > 0) {
-        const bounds = valid.reduce(
-          (b: any, c: number[]) => ({
-            minLat: Math.min(b.minLat, c[1]),
-            maxLat: Math.max(b.maxLat, c[1]),
-            minLng: Math.min(b.minLng, c[0]),
-            maxLng: Math.max(b.maxLng, c[0]),
-          }),
-          { minLat: Infinity, maxLat: -Infinity, minLng: Infinity, maxLng: -Infinity }
-        )
-        map.fitBounds(
-          [
-            [bounds.minLat, bounds.minLng],
-            [bounds.maxLat, bounds.maxLng],
-          ],
-          { padding: [50, 50] }
-        )
-      }
+    if (data.kecamatan.features.length > 0) {
+      const geo = L.geoJSON(data.kecamatan as any)
+      map.fitBounds(geo.getBounds(), { padding: [50, 50] })
     }
   }, [map, data])
 
@@ -102,11 +86,11 @@ function MapContent({ data, tahun }: { data: MapDataResponse; tahun: number }) {
           const props = feature?.properties as any
           const segmen: Segmen = props?.segmen ?? "RENDAH"
           return {
-            fillColor: getSegmenColor(segmen, 0.4),
-            weight: 2,
-            opacity: 0.8,
-            color: "rgba(255,255,255,0.6)",
-            fillOpacity: 0.4,
+            fillColor: getSegmenColor(segmen, 0.8),
+            weight: 2.5,
+            opacity: 1,
+            color: "#ffffff",
+            fillOpacity: 0.8,
           }
         }}
         onEachFeature={(feature, layer) => {
@@ -114,17 +98,17 @@ function MapContent({ data, tahun }: { data: MapDataResponse; tahun: number }) {
           const segmen: Segmen = props?.segmen ?? "RENDAH"
           layer.on({
             mouseover: (e) => {
-              e.target.setStyle({ fillOpacity: 0.7, weight: 3 })
+              e.target.setStyle({ fillOpacity: 0.95, weight: 3.5 })
               e.target.bringToFront()
             },
             mouseout: (e) => {
-              e.target.setStyle({ fillOpacity: 0.4, weight: 2 })
+              e.target.setStyle({ fillOpacity: 0.8, weight: 2.5 })
             },
           })
-          layer.bindTooltip(props.nama || props.nm_kecamatan, {
-            sticky: true,
-            className: "rounded-lg px-2 py-1 text-xs shadow-lg",
-          })
+          layer.bindTooltip(
+            `<strong>${props.nama || props.nm_kecamatan}</strong><br/>${formatSegmen(segmen)} — ${props.rata_cakupan?.toFixed(1) ?? "-"}%`,
+            { sticky: true, className: "rounded-lg px-3 py-2 text-xs shadow-lg" }
+          )
           const kecNama = props.nama || props.nm_kecamatan
           const kecData = kecamatanDataMap.get(kecNama)
           const pkmList = puskesmasByKecamatan.get(kecNama) ?? []
@@ -139,56 +123,10 @@ function MapContent({ data, tahun }: { data: MapDataResponse; tahun: number }) {
               penduduk: demografi?.penduduk,
               kepadatan: demografi?.kepadatan,
             }),
-            { maxWidth: 320, className: "custom-popup" }
+            { maxWidth: 340, className: "custom-popup" }
           )
         }}
       />
-
-      {data.puskesmas.features.map((f: any) => {
-        const pc = f.geometry.coordinates as number[]
-        if (pc[0] === 0 && pc[1] === 0) return null
-        const props = f.properties as any
-        const segmen: Segmen = props.segmen ?? "RENDAH"
-        return (
-          <Marker
-            key={`pkm-${props.kode}`}
-            position={[pc[1], pc[0]]}
-            icon={L.divIcon({
-              className: "custom-marker",
-              html: `<div style="
-                width: 14px; height: 14px;
-                background: ${getSegmenColorSolid(segmen)};
-                border: 2px solid white;
-                border-radius: 50%;
-                box-shadow: 0 0 6px ${getSegmenColorSolid(segmen)};
-              "></div>`,
-              iconSize: [14, 14],
-              iconAnchor: [7, 7],
-            })}
-          >
-            <Popup>
-              <div className="text-sm min-w-[180px]">
-                <strong className="text-base">{props.nama}</strong>
-                <br />
-                <span className="text-gray-400">{props.kecamatan}</span>
-                <br />
-                Cakupan: {props.rata_cakupan?.toFixed(1) ?? "-"}%
-                <br />
-                Segmen: <span style={{ color: getSegmenColorSolid(segmen), fontWeight: 600 }}>
-                  {segmen === "SANGAT_BAIK" ? "Sangat Baik (\u226580%)" : segmen === "SEDANG" ? "Sedang (50-79%)" : "Rendah (<50%)"}
-                </span>
-                <br />
-                <a
-                  href={`/puskesmas/${props.id}`}
-                  className="text-emerald-400 hover:text-emerald-300 underline mt-1 inline-block"
-                >
-                  Detail &rarr;
-                </a>
-              </div>
-            </Popup>
-          </Marker>
-        )
-      })}
     </>
   )
 }
@@ -198,6 +136,7 @@ export default function MapWrapper() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tahun, setTahun] = useState<number>(0)
+  const [sidebarKec, setSidebarKec] = useState<string | null>(null)
 
   const fetchData = useCallback(async (t: number) => {
     setLoading(true)
@@ -221,9 +160,22 @@ export default function MapWrapper() {
     fetchData(tahun)
   }, [tahun, fetchData])
 
-  const stats = useMemo(() => {
-    if (!data) return null
-    return data.stats
+  const stats = useMemo(() => data?.stats ?? null, [data])
+
+  const sortedKecamatan = useMemo(() => {
+    if (!data) return []
+    return data.kecamatan.features
+      .map((f: any) => {
+        const p = f.properties as any
+        const segmen: Segmen = p.segmen ?? "RENDAH"
+        return {
+          nama: p.nama || p.nm_kecamatan,
+          rataCakupan: p.rata_cakupan,
+          segmen,
+          puskesmasCount: p.puskesmas_count ?? 0,
+        }
+      })
+      .sort((a: any, b: any) => (b.rataCakupan ?? 0) - (a.rataCakupan ?? 0))
   }, [data])
 
   const [activeSegmen, setActiveSegmen] = useState<Segmen | null>(null)
@@ -270,11 +222,7 @@ export default function MapWrapper() {
               className="text-xl font-bold"
               style={{ color: getSegmenColorSolid(stats?.segmenDominan ?? "RENDAH") }}
             >
-              {stats?.segmenDominan === "SANGAT_BAIK"
-                ? "Sangat Baik"
-                : stats?.segmenDominan === "SEDANG"
-                  ? "Sedang"
-                  : "Rendah"}
+              {formatSegmen(stats?.segmenDominan ?? "RENDAH")}
             </div>
           </div>
         </div>
@@ -286,17 +234,50 @@ export default function MapWrapper() {
         />
       </div>
 
-      <div className="relative h-[600px] overflow-hidden rounded-xl border border-theme">
-        <MapLegend activeSegmen={activeSegmen} onHover={setActiveSegmen} />
+      <div className="flex gap-4">
+        <div className="relative h-[600px] flex-1 overflow-hidden rounded-xl border border-theme">
+          <MapLegend activeSegmen={activeSegmen} onHover={setActiveSegmen} />
 
-        <LeafletMap
-          center={[-0.93, 100.38]}
-          zoom={12}
-          className="h-full w-full"
-          zoomControl={false}
-        >
-          <MapContent data={data} tahun={tahun} />
-        </LeafletMap>
+          <LeafletMap
+            center={[-0.93, 100.38]}
+            zoom={12}
+            className="h-full w-full"
+            zoomControl={false}
+          >
+            <MapContent data={data} tahun={tahun} />
+          </LeafletMap>
+        </div>
+
+        <div className="w-72 shrink-0 overflow-y-auto rounded-xl border border-theme bg-theme-secondary/30 p-4 max-h-[600px]">
+          <h3 className="mb-3 text-sm font-semibold text-theme">Data per Kecamatan</h3>
+          <div className="space-y-2">
+            {sortedKecamatan.map((k: any) => (
+              <button
+                key={k.nama}
+                onClick={() => setSidebarKec(sidebarKec === k.nama ? null : k.nama)}
+                className={`w-full rounded-lg border p-3 text-left text-sm transition-colors ${
+                  sidebarKec === k.nama
+                    ? "border-emerald-500/30 bg-emerald-500/10"
+                    : "border-theme bg-theme-secondary/50 hover:bg-theme-secondary"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-theme">{k.nama}</span>
+                  <span className="text-xs text-muted">{k.puskesmasCount} pkm</span>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: getSegmenColorSolid(k.segmen) }}
+                  />
+                  <span className="text-xs text-theme-secondary">
+                    {formatSegmen(k.segmen)} — {k.rataCakupan?.toFixed(1) ?? "-"}%
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )

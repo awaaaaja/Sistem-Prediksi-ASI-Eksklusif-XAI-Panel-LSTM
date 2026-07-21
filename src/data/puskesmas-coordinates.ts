@@ -4,8 +4,15 @@ export interface PuskesmasCoord {
 }
 
 export const PUSKESMAS_COORDS: Record<string, PuskesmasCoord> = {
-  // Override khusus untuk puskesmas dengan koordinat DB yang tidak akurat
-  PKM15: { lat: -0.9750, lng: 100.3600 },  // PEMANCUNGAN → Padang Selatan (DB seed di pantai, geser inland)
+  // Override — koordinat DB seed yang tidak akurat berdasarkan point-in-polygon test
+  // terhadap kecamatan-padang.geo.json
+  PKM03: { lat: -0.8850, lng: 100.3700 },  // IKUR KOTO
+  PKM11: { lat: -0.9820, lng: 100.4330 },  // LUBUK KILANGAN
+  PKM14: { lat: -0.9500, lng: 100.3580 },  // PADANG PASIR
+  PKM15: { lat: -0.9750, lng: 100.3600 },  // PEMANCUNGAN
+  PKM17: { lat: -0.9600, lng: 100.3650 },  // SEBERANG PADANG
+  PKM23: { lat: -1.0000, lng: 100.4150 },  // BUNGUS
+  PKM24: { lat: -0.8712, lng: 100.5051 },  // PAUH
 }
 
 export const KECAMATAN_DEMOGRAFI: Record<string, { penduduk: number; kepadatan: number }> = {

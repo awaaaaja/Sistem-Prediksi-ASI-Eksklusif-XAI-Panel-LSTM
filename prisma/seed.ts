@@ -22,7 +22,7 @@ const KECAMATAN_DATA = [
 const PUSKESMAS_DATA = [
   { kode: "PKM01", nama: "AIR DINGIN", kecamatan: "Koto Tangah", latitude: -0.8880, longitude: 100.3600 },
   { kode: "PKM02", nama: "ANAK AIR", kecamatan: "Koto Tangah", latitude: -0.8850, longitude: 100.3650 },
-  { kode: "PKM03", nama: "IKUR KOTO", kecamatan: "Koto Tangah", latitude: -0.8900, longitude: 100.3700 },
+  { kode: "PKM03", nama: "IKUR KOTO", kecamatan: "Koto Tangah", latitude: -0.8850, longitude: 100.3700 },
   { kode: "PKM04", nama: "LB.BUAYA", kecamatan: "Koto Tangah", latitude: -0.8830, longitude: 100.3550 },
   { kode: "PKM05", nama: "TUNGGUL HITAM", kecamatan: "Koto Tangah", latitude: -0.8860, longitude: 100.3580 },
   { kode: "PKM06", nama: "AMBACANG", kecamatan: "Kuranji", latitude: -0.9050, longitude: 100.3850 },
@@ -30,20 +30,20 @@ const PUSKESMAS_DATA = [
   { kode: "PKM08", nama: "KURANJI", kecamatan: "Kuranji", latitude: -0.9080, longitude: 100.3880 },
   { kode: "PKM09", nama: "LUBUK BEGALUNG", kecamatan: "Lubuk Begalung", latitude: -0.9700, longitude: 100.3950 },
   { kode: "PKM10", nama: "PEGAMBIRAN", kecamatan: "Lubuk Begalung", latitude: -0.9650, longitude: 100.3900 },
-  { kode: "PKM11", nama: "LUBUK KILANGAN", kecamatan: "Lubuk Kilangan", latitude: -0.9820, longitude: 100.4280 },
+  { kode: "PKM11", nama: "LUBUK KILANGAN", kecamatan: "Lubuk Kilangan", latitude: -0.9820, longitude: 100.4330 },
   { kode: "PKM12", nama: "LAPAI", kecamatan: "Nanggalo", latitude: -0.9000, longitude: 100.3730 },
   { kode: "PKM13", nama: "NANGGALO", kecamatan: "Nanggalo", latitude: -0.9030, longitude: 100.3760 },
-  { kode: "PKM14", nama: "PADANG PASIR", kecamatan: "Padang Barat", latitude: -0.9500, longitude: 100.3500 },
-  { kode: "PKM15", nama: "PEMANCUNGAN", kecamatan: "Padang Selatan", latitude: -0.9620, longitude: 100.3460 },
+  { kode: "PKM14", nama: "PADANG PASIR", kecamatan: "Padang Barat", latitude: -0.9500, longitude: 100.3580 },
+  { kode: "PKM15", nama: "PEMANCUNGAN", kecamatan: "Padang Selatan", latitude: -0.9750, longitude: 100.3600 },
   { kode: "PKM16", nama: "RAWANG", kecamatan: "Padang Selatan", latitude: -0.9660, longitude: 100.3500 },
-  { kode: "PKM17", nama: "SEBERANG PADANG", kecamatan: "Padang Selatan", latitude: -0.9600, longitude: 100.3450 },
+  { kode: "PKM17", nama: "SEBERANG PADANG", kecamatan: "Padang Selatan", latitude: -0.9600, longitude: 100.3620 },
   { kode: "PKM18", nama: "ANDALAS", kecamatan: "Padang Timur", latitude: -0.9380, longitude: 100.3680 },
   { kode: "PKM19", nama: "PARAK KARAKAH", kecamatan: "Padang Timur", latitude: -0.9350, longitude: 100.3720 },
   { kode: "PKM20", nama: "AIR TAWAR", kecamatan: "Padang Utara", latitude: -0.9180, longitude: 100.3560 },
   { kode: "PKM21", nama: "ALAI", kecamatan: "Padang Utara", latitude: -0.9220, longitude: 100.3600 },
   { kode: "PKM22", nama: "ULAK KARANG", kecamatan: "Padang Utara", latitude: -0.9150, longitude: 100.3550 },
-  { kode: "PKM23", nama: "BUNGUS", kecamatan: "Bungus Teluk Kabung", latitude: -1.0000, longitude: 100.3950 },
-  { kode: "PKM24", nama: "PAUH", kecamatan: "Pauh", latitude: -0.9180, longitude: 100.4100 },
+  { kode: "PKM23", nama: "BUNGUS", kecamatan: "Bungus Teluk Kabung", latitude: -1.0000, longitude: 100.4150 },
+  { kode: "PKM24", nama: "PAUH", kecamatan: "Pauh", latitude: -0.8712, longitude: 100.5051 },
 ]
 
 function parseCSV(filePath: string): Record<string, string>[] {
@@ -116,7 +116,7 @@ async function main() {
 
   // 4. Seed Data Bulanan dari CSV
   console.log("\nMembaca data CSV...")
-  const csvPath = path.join(__dirname, "..", "data_master_2021_2024_scaled.csv")
+  const csvPath = path.join(__dirname, "..", "data_master_2021_2025_opsi_b.csv")
   if (!fs.existsSync(csvPath)) {
     console.error(`  ✗ File CSV tidak ditemukan: ${csvPath}`)
     console.log("\nSeed selesai dengan data dasar (kecamatan + puskesmas).")

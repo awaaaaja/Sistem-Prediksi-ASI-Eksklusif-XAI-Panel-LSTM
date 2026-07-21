@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
 
   const tahunDiDB = await prisma.$queryRawUnsafe<{ tahun: number }[]>(
-    `SELECT DISTINCT YEAR(tanggal) as tahun FROM data_bulanan ORDER BY tahun DESC`
+    `SELECT DISTINCT EXTRACT(YEAR FROM tanggal)::int as tahun FROM data_bulanan ORDER BY tahun DESC`
   )
   const tahunTersedia = tahunDiDB.map((r) => r.tahun)
   const maxTahun = tahunTersedia.length > 0 ? Math.max(...tahunTersedia) : 0
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       `
       SELECT d.puskesmas_id, AVG(d.persentase_cakupan) as rata_cakupan
       FROM data_bulanan d
-      WHERE YEAR(d.tanggal) = ?
+      WHERE EXTRACT(YEAR FROM d.tanggal) = $1
       GROUP BY d.puskesmas_id
       `,
       tahun

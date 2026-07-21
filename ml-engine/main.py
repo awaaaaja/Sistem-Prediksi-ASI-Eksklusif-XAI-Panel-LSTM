@@ -50,12 +50,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        os.getenv("NEXTJS_ORIGIN", "http://localhost:3000"),
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,6 +104,8 @@ async def predict(req: PredictRequest):
             final_pred = sy.inverse_transform(raw_pred).flatten()
         else:
             final_pred = raw_pred.flatten()
+
+        final_pred = np.clip(final_pred, 0.0, 100.0)
 
         exec_ms = round((time.time() - start) * 1000, 2)
 

@@ -16,7 +16,13 @@ scaler_Y = None
 def load_models():
     global model, scaler_X, scaler_Y
 
-    model_path = os.getenv("MODEL_PATH", os.path.join(_BASE_DIR, "models", "model_lstm_panel.keras"))
+    model_path = os.getenv("MODEL_PATH", "")
+    if not model_path:
+        base = os.path.join(_BASE_DIR, "models")
+        model_path = os.path.join(base, "model_lstm_panel.keras")
+        if not os.path.exists(model_path):
+            model_path = os.path.join(base, "model_lstm_panel.h5")
+
     scaler_X_path = os.getenv("SCALER_X_PATH", os.path.join(_BASE_DIR, "models", "scaler_X.pkl"))
     scaler_Y_path = os.getenv("SCALER_Y_PATH", os.path.join(_BASE_DIR, "models", "scaler_Y.pkl"))
 
@@ -29,9 +35,18 @@ def load_models():
     try:
         model = tf.keras.models.load_model(model_path, compile=False)
         status["model_loaded"] = True
-        logger.info(f"Model loaded. Input shape: {model.input_shape}, Output shape: {model.output_shape}")
+        logger.info(f"Model loaded from {model_path}. Input shape: {model.input_shape}, Output shape: {model.output_shape}")
     except Exception as e:
-        logger.error(f"Model load failed: {e}")
+        logger.error(f"Model load failed ({model_path}): {e}")
+        # fallback: coba format lain
+        try:
+            alt = model_path.replace(".keras", ".h5") if ".keras" in model_path else model_path.replace(".h5", ".keras")
+            if os.path.exists(alt):
+                model = tf.keras.models.load_model(alt, compile=False)
+                status["model_loaded"] = True
+                logger.info(f"Model loaded from fallback {alt}")
+        except Exception as e2:
+            logger.error(f"Fallback load also failed: {e2}")
 
     try:
         scaler_X = joblib.load(scaler_X_path)

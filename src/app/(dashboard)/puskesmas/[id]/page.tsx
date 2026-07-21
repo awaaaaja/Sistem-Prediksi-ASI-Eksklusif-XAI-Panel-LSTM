@@ -4,13 +4,14 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ArrowLeft, Lightning, ChartLine,
-  Baby, DropHalf
+  Baby, DropHalf, Clock
 } from "@phosphor-icons/react/dist/ssr"
 import { GlowCard } from "@/components/glow-card"
 import { AnimatedNumber } from "@/components/animated-number"
 import { ShapForcePlot } from "@/components/xai/shap-force-plot"
 import { ShapSummaryBar } from "@/components/xai/shap-summary-bar"
 import { ShapFeatureTimeline } from "@/components/xai/shap-feature-timeline"
+import { CounterfactualAnalysis } from "@/components/xai/counterfactual-analysis"
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
@@ -39,6 +40,13 @@ interface ShapFeature {
   mean_abs_impact: number
 }
 
+interface PrediksiRow {
+  id: number
+  nilaiPrediksi: number
+  executionTimeMs: number
+  createdAt: string
+}
+
 interface ShapData {
   success: boolean
   expected_value: number
@@ -57,6 +65,7 @@ export default function DetailPage({ params }: { params: { id: string } }) {
   const id = params.id
   const [puskesmas, setPuskesmas] = useState<PuskesmasDetail | null>(null)
   const [history, setHistory] = useState<HistoryRow[]>([])
+  const [prediksiList, setPrediksiList] = useState<PrediksiRow[]>([])
   const [prediction, setPrediction] = useState<number | null>(null)
   const [shapData, setShapData] = useState<ShapData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -66,12 +75,14 @@ export default function DetailPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     async function load() {
       try {
-        const [pRes, hRes] = await Promise.all([
+        const [pRes, hRes, prRes] = await Promise.all([
           fetch(`/api/puskesmas/${id}`),
           fetch(`/api/history/${id}`),
+          fetch(`/api/prediksi/${id}`),
         ])
         if (pRes.ok) setPuskesmas(await pRes.json())
         if (hRes.ok) setHistory(await hRes.json())
+        if (prRes.ok) setPrediksiList(await prRes.json())
       } catch {
         setError("Gagal memuat data")
       }
@@ -248,6 +259,61 @@ export default function DetailPage({ params }: { params: { id: string } }) {
           </GlowCard>
         </>
       )}
+
+      {prediction !== null && shapData && (
+        <CounterfactualAnalysis
+          prediction={prediction}
+          shapData={shapData}
+          currentHistory={history.slice(-12)}
+        />
+      )}
+
+      <GlowCard>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-theme">
+          <Clock size={18} className="text-theme-secondary" />
+          Riwayat Prediksi
+        </h2>
+        {prediksiList.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-theme text-left text-theme-secondary">
+                  <th className="pb-3 font-medium">#</th>
+                  <th className="pb-3 font-medium">Prediksi</th>
+                  <th className="pb-3 font-medium">Waktu</th>
+                  <th className="pb-3 font-medium">Durasi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {prediksiList.map((pr, i) => (
+                  <tr key={pr.id} className="border-b border-theme text-theme last:border-0 bg-hover-theme transition-colors">
+                    <td className="py-3 text-muted">{prediksiList.length - i}</td>
+                    <td className="py-3">
+                      <span className="text-cyan-400">{pr.nilaiPrediksi.toFixed(2)}%</span>
+                    </td>
+                    <td className="py-3 text-theme-secondary">
+                      {new Date(pr.createdAt).toLocaleString("id-ID")}
+                    </td>
+                    <td className="py-3 text-muted">
+                      {pr.executionTimeMs.toFixed(0)} ms
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center gap-2 py-8 text-center"
+          >
+            <Lightning size={32} className="text-muted" />
+            <p className="text-sm text-muted">Belum ada riwayat prediksi</p>
+            <p className="text-xs text-muted">Klik &ldquo;Prediksi Sekarang&rdquo; untuk membuat prediksi pertama</p>
+          </motion.div>
+        )}
+      </GlowCard>
     </motion.div>
   )
 }

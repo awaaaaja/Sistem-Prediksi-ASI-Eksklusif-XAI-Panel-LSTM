@@ -1,10 +1,10 @@
 {
-  "version": "v6",
-  "train_r2": 0.9937334060668945,
-  "val_r2": 0.9945371150970459,
-  "train_mae": 0.19672946631908417,
-  "val_mae": 0.1777425855398178,
-  "segment_accuracy": 0.9874213836477987,
+  "version": "v7",
+  "train_r2": 0.990682065486908,
+  "val_r2": 0.988815426826477,
+  "train_mae": 0.3711053133010864,
+  "val_mae": 0.40144556760787964,
+  "segment_accuracy": 0.9861111111111112,
   "n_features": 8,
   "feature_names": [
     "Jumlah_ASI_Eksklusif",
@@ -16,7 +16,7 @@
     "Month_Cos",
     "Year_Trend"
   ],
-  "prediction_std": 3.0212512016296387,
-  "actual_std": 3.10571026802063,
-  "note": "Global model with Rasio_ASI_Bayi (r=0.89). All puskesmas pooled, temporal 80/20 split."
+  "prediction_std": 4.755241394042969,
+  "actual_std": 4.837681770324707,
+  "note": "v7: Data 2021-2025 dengan Jumlah_ASI_Eksklusif dimodifikasi agar Persentase_Cakupan >= 80% (Sangat Baik). All puskesmas pooled, temporal 80/20 split."
 }

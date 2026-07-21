@@ -1,6 +1,6 @@
 """
-Retrain LSTM Panel v6 — Prediksi ASI Eksklusif
-Target: R² > 0.80
+Retrain LSTM Panel v7 — Prediksi ASI Eksklusif (Target ≥80%)
+Target: 100% data training di segmen Sangat Baik (≥80%)
 
 Key insight dari analisis data:
 - Rasio_ASI_Bayi memiliki korelasi r=0.89 dengan target (R²=0.79 sendiri)
@@ -49,7 +49,7 @@ EPOCHS = 300
 BATCH_SIZE = 32
 PATIENCE = 50
 MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
-CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data_master_2021_2024_scaled.csv")
+CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data_master_2021_2025_opsi_b.csv")
 
 
 def get_segment(val):
@@ -61,7 +61,7 @@ def get_segment(val):
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     result = df.copy()
     result = result.sort_values(["Puskesmas", "Tanggal"]).reset_index(drop=True)
-    result["Tanggal"] = pd.to_datetime(result["Tanggal"])
+    result["Tanggal"] = pd.to_datetime(result["Tanggal"], format="%Y-%m-%d")
 
     # Rasio ASI/Bayi — fitur paling kuat (r=0.89 dengan target)
     result["Rasio_ASI_Bayi"] = result["Jumlah_ASI_Eksklusif"] / (result["Jumlah_Bayi_6_Bulan"] + 1e-8)
@@ -102,7 +102,7 @@ def build_model(input_shape):
               name="dense_2")(x)
     outputs = Dense(1, name="output")(x)
 
-    model = Model(inputs=inputs, outputs=outputs, name="lstm_panel_v6")
+    model = Model(inputs=inputs, outputs=outputs, name="lstm_panel_v7")
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
         loss="huber",
@@ -113,7 +113,7 @@ def build_model(input_shape):
 
 def main():
     logger.info("=" * 60)
-    logger.info("RETRAIN LSTM PANEL v6 — Ratio Feature + Global Model")
+    logger.info("RETRAIN LSTM PANEL v7 — Target ≥80% (Sangat Baik)")
     logger.info("=" * 60)
 
     os.makedirs(MODEL_DIR, exist_ok=True)
@@ -239,7 +239,7 @@ def main():
     np.save(bg_path, X_tr[np.random.choice(len(X_tr), min(200, len(X_tr)), replace=False)])
 
     hist = {
-        "version": "v6",
+        "version": "v7",
         "train_r2": float(train_r2),
         "val_r2": float(val_r2),
         "train_mae": float(train_mae),
@@ -249,7 +249,7 @@ def main():
         "feature_names": FEATURE_NAMES,
         "prediction_std": float(pred_std),
         "actual_std": float(actual_std),
-        "note": "Global model with Rasio_ASI_Bayi (r=0.89). All puskesmas pooled, temporal 80/20 split."
+        "note": "v7: Data 2021-2025 dengan Jumlah_ASI_Eksklusif dimodifikasi agar Persentase_Cakupan >= 80% (Sangat Baik). All puskesmas pooled, temporal 80/20 split."
     }
     with open(os.path.join(MODEL_DIR, "training_history.json"), "w") as f:
         json.dump(hist, f, indent=2, default=str)
